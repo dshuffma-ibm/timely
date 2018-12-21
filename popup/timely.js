@@ -1,5 +1,6 @@
-var auto_ts_units = true;
-var use_offset = true;
+/* eslint no-bitwise: 0 */
+let auto_ts_units = true;
+let use_offset = true;
 updateNow();
 listenHereSon();
 showUnits('ms');
@@ -48,7 +49,7 @@ function listenHereSon() {
 
 		// format text buttons
 		try {
-			var textInput = document.getElementById('inputText').innerText;
+			let textInput = document.getElementById('inputText').innerText;
 			document.querySelector('#inputText').classList.remove('jsonError');
 			if (e.target.classList.contains('encode64')) {
 				document.querySelector('#inputText').innerText = b64(textInput);
@@ -60,7 +61,7 @@ function listenHereSon() {
 				document.querySelector('#inputText').innerText = decodeChars(textInput);
 			} else if (e.target.classList.contains('pretty')) {
 				document.querySelector('#inputText').innerHTML = prettyPrint(textInput);
-				var text = document.getElementById('inputText').innerText;
+				let text = document.getElementById('inputText').innerText;
 				if (text.indexOf('%3C') >= 0) {
 					document.querySelector('#inputText').innerText = urlDecode(text);
 				}
@@ -121,12 +122,12 @@ function listenHereSon() {
 
 // convert the ts in the input box to a human friendly string
 function convert4humans() {
-	var rawInput = document.getElementById('inputTs').value;
-	var ts_ms = 0;
+	let rawInput = document.getElementById('inputTs').value;
+	let ts_ms = 0;
 	if (rawInput === '') {
 		updateIfDiff('#output', '-');
 	} else {
-		var obj = parse_2_number(rawInput);
+		let obj = parse_2_number(rawInput);
 		if (obj.type === 'date') {									// if a date's provided show the ts in output
 			ts_ms = obj.value.getTime();
 			updateIfDiff('#output', obj.value.getTime());
@@ -134,7 +135,7 @@ function convert4humans() {
 			document.querySelector('#output').classList.remove('error');
 		} else {													// if a number is provided show the date in the output
 			ts_ms = conform_2_ms(rawInput);
-			var formated = formatDate(ts_ms, '%q %d, %Y %I:%m%p');
+			let formated = formatDate(ts_ms, '%q %d, %Y %I:%m%p');
 			if (formated) {
 				document.querySelector('#output').classList.remove('error');
 			} else {
@@ -143,14 +144,14 @@ function convert4humans() {
 			}
 			updateIfDiff('#output', formated);
 		}
-		var diff = ts_ms - Date.now();
-		document.querySelector('#elapsed').innerText = friendlyMs(diff)
+		let diff = ts_ms - Date.now();
+		document.querySelector('#elapsed').innerText = friendlyMs(diff);
 	}
 }
 
 // update the current ts and date (right NOW)
 function updateNow() {
-	var rightNow = Date.now();
+	let rightNow = Date.now();
 	updateIfDiff('#nowFriendly', formatDate(rightNow, '%q %d, %Y %I:%m%p'));
 	document.querySelector('#now').innerText = rightNow.toString().trim();
 }
@@ -166,8 +167,8 @@ function showUnits(units) {
 // see if we can consume this input... (date -> number), (number -> number), (bad -> null)
 function parse_2_number(raw) {
 	if (isNaN(raw)) {									// oh boy
-		var d = new Date(raw);							// see if date can parse it
-		var number = d.getTime();
+		let d = new Date(raw);							// see if date can parse it
+		let number = d.getTime();
 		if (isNaN(number)) {
 			return { type: null, value: null };			// it couldn't be helped, error out
 		} else {
@@ -199,8 +200,8 @@ function conform_2_ms(number) {
 
 // convert to ms to friendly 0.0 units
 function friendlyMs(ms) {
-	var ret = '';
-	var neg = 1;
+	let ret = '';
+	let neg = 1;
 	if (isNaN(ms)) {
 		ret = '? sec';
 	} else {
@@ -232,9 +233,9 @@ function friendlyMs(ms) {
 // format a date from timestamp
 //------------------------------------------------------------
 function formatDate(timestamp_ms, fmt) {
-	var d = new Date();
-	var offset_ms = d.getTimezoneOffset() * 60 * 1000;
-	var months = ['Jan', 'Feb', 'March', 'April', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+	let d = new Date();
+	let offset_ms = d.getTimezoneOffset() * 60 * 1000;
+	let months = ['Jan', 'Feb', 'March', 'April', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
 	if (!use_offset) {
 		offset_ms = 0;
 	}
@@ -246,12 +247,12 @@ function formatDate(timestamp_ms, fmt) {
 	if (!timestamp_ms || isNaN(timestamp_ms)) {
 		return null;
 	} else {
-		var date = new Date(timestamp_ms - offset_ms);
+		let date = new Date(timestamp_ms - offset_ms);
 		if (isNaN(date.getTime())) {
 			return null;
 		}
 		return fmt.replace(/%([a-zA-Z])/g, function (_, fmtCode) {
-			var tmp;
+			let tmp;
 			switch (fmtCode) {
 				case 'Y':								//Year
 					return date.getUTCFullYear();
@@ -265,16 +266,16 @@ function formatDate(timestamp_ms, fmt) {
 					return pad(date.getUTCHours());
 				case 'I':								//12 Hour 0 padded
 					tmp = date.getUTCHours();
-					if (tmp === 0) tmp = 12;			//00:00 should be seen as 12:00am
-					else if (tmp > 12) tmp -= 12;
+					if (tmp === 0) { tmp = 12; }		//00:00 should be seen as 12:00am
+					else if (tmp > 12) { tmp -= 12; }
 					return pad(tmp);
 				case 'p':								//am / pm
 					tmp = date.getUTCHours();
-					if (tmp >= 12) return 'pm';
+					if (tmp >= 12) { return 'pm'; }
 					return 'am';
 				case 'P':								//AM / PM
 					tmp = date.getUTCHours();
-					if (tmp >= 12) return 'PM';
+					if (tmp >= 12) { return 'PM'; }
 					return 'AM';
 				case 'm':								//Minutes 0 padded
 					return pad(date.getUTCMinutes());
@@ -282,10 +283,10 @@ function formatDate(timestamp_ms, fmt) {
 					return pad(date.getUTCSeconds());
 				case 'r':								//Milliseconds 0 padded
 					return pad(date.getUTCMilliseconds(), 3);
-				case 'q':								//UTC timestamp
+				case 'z':								//UTC timestamp
 					return date.getTime();
 				default:
-					logger.warn('unsupported fmt for format date()', fmt);
+					console.warn('unsupported fmt for format date()', fmt);
 					return date.getTime();
 			}
 		});
@@ -295,7 +296,7 @@ function formatDate(timestamp_ms, fmt) {
 // update the html of the element if it's value has changed, else leave it alone
 function updateIfDiff(id, str) {
 	str = str.toString().trim();
-	var currently = document.querySelector(id).innerText;
+	let currently = document.querySelector(id).innerText;
 	if (currently !== str) {
 		document.querySelector(id).innerText = str;
 	}
@@ -324,7 +325,7 @@ function fromB64(text) {
 
 // encode chars
 function encodeChars(text) {
-	var temp = JSON.stringify(text).replace(/\\"/g, '"');
+	let temp = JSON.stringify(text).replace(/\\"/g, '"');
 	return temp.substring(1, 1) + temp.substring(1, temp.length - 1);
 }
 
@@ -472,7 +473,7 @@ function hexStrToStr(hex) {
 
 // count and display the number of characters
 function countText() {
-	var textInput = document.getElementById('inputText').innerText;
+	let textInput = document.getElementById('inputText').innerText;
 	document.querySelector('#textCount').innerText = textInput.length + ' characters';
 	if (textInput.length === 0) {
 		document.querySelector('#hint').classList.remove('hidden');
@@ -551,5 +552,5 @@ function sortItOut(unsorted) {
 	}
 	function isObject(o) {
 		return o instanceof Object && o.constructor === Object;
-	};
-};
+	}
+}
