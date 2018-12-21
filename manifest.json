@@ -1,0 +1,24 @@
+{
+	"description": "Convert timestamps to not timestamps and other useful things.",
+	"manifest_version": 2,
+	"name": "Timely",
+	"version": "1.0.5",
+	"homepage_url": "https://github.com/mdn/webextensions-examples/tree/master/beastify",
+	"icons": {
+		"48": "icons/timely-48.png"
+	},
+	"permissions": [],
+	"browser_action": {
+		"default_icon": "icons/timely-32.png",
+		"theme_icons": [
+			{
+				"light": "icons/timely-32.png",
+				"dark": "icons/timely-32.png",
+				"size": 32
+			}
+		],
+		"default_title": "Timely",
+		"default_popup": "popup/timely.html"
+	},
+	"web_accessible_resources": []
+}

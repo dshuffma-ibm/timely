@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="timely.css" />
+</head>
+<body>
+	<div id="popup-content">
+
+		<!-- Input Section -->
+		<div id="inputWrap" class="inputWrap">
+			Input:
+			<input id="inputTs" type="text" placeholder="UTC Timestamp/Date">
+			<button id="unitsButton" type="button">ms</button>
+		</div>
+
+		<!-- Output Section -->
+		<div id="outputWrap" class="outputWrap">
+			Output:
+			<span id="output">-</span>
+		</div>
+
+		<!-- Timestamp Section -->
+		<div id="nowWrapper" class="nowWrapper">
+			<div class="nowWrap">
+				<label>Now</label>
+				[<span id="offset" class="offset">0</span>]&nbsp;&nbsp;
+				<button id="toggleOffsetButton" class="clearUtc">UTC</button>
+			</div>
+			<div id="nowFriendly">-</div>
+			<div id="timestampWrap" title="Copy Timestamp" class="timestampClick">
+				<span id="now" class="timestampClick">0</span> (<span id="units2">ms</span>)
+				<svg id="copyTsIcon" class="timestampClick" aria-hidden="true" data-prefix="far" data-icon="copy" class="svg-inline--fa fa-copy fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M433.941 65.941l-51.882-51.882A48 48 0 0 0 348.118 0H176c-26.51 0-48 21.49-48 48v48H48c-26.51 0-48 21.49-48 48v320c0 26.51 21.49 48 48 48h224c26.51 0 48-21.49 48-48v-48h80c26.51 0 48-21.49 48-48V99.882a48 48 0 0 0-14.059-33.941zM266 464H54a6 6 0 0 1-6-6V150a6 6 0 0 1 6-6h74v224c0 26.51 21.49 48 48 48h96v42a6 6 0 0 1-6 6zm128-96H182a6 6 0 0 1-6-6V54a6 6 0 0 1 6-6h106v88c0 13.255 10.745 24 24 24h88v202a6 6 0 0 1-6 6zm6-256h-64V48h9.632c1.591 0 3.117.632 4.243 1.757l48.368 48.368a6 6 0 0 1 1.757 4.243V112z"></path></svg>
+			</div>
+		</div>
+
+		<!-- Difference Section -->
+		<div id="elapsedWrapper">
+			<div class="diffWrap">
+				<label>Difference From Now</label>
+			</div>
+			<div id="elapsed">0.0 ms</div>
+		</div>
+
+		<!-- Format Text-->
+		<div class="openPanelWrap">
+			<a href="#" class="openTextPanel">Open Text Formatter</a>
+		</div>
+		<div id="textPanel" class="hidden">
+			<div id="buttonWrap">
+				<button class="formatButton encode64" type="button" title="Encode string to base 64">Encode B64</button>
+				<button class="formatButton decode64" type="button" title="Decode string from base 64">Decode B64</button>
+				<button class="formatButton encodeTxt" type="button" title="Encode line feed and similar characters">Encode LF</button>
+				<button class="formatButton decodeTxt" type="button" title="Decode line feed and similar characters">Decode LF</button>
+				<button class="formatButton pretty" type="button" title="Stringify JSON with white space">Stringify Pretty</button>
+				<button class="formatButton stringify" type="button" title="Stringify JSON without white space">Stringify</button>
+				<button class="formatButton urlEncode" type="button" title="encodeURIComponent() a string">URL Encode</button>
+				<button class="formatButton urlDecode" type="button" title="decodeURIComponent() a string">URL Decode</button>
+				<button class="formatButton hexStr" type="button" title="Convert a string to its representation in hexadecimal">Str To Hex</button>
+				<button class="formatButton str" type="button" title="Convert a hexadecimal string to a string">Hex To Str</button>
+				<button class="formatButton sort" type="button" title="Sort JSON keys and array elements">Sort JSON</button>
+				<button class="formatButton copy" type="button" id="copyButton" title="Copy textarea to clipboard">
+					<svg id="copyIcon" title="Copy Text" aria-hidden="true" data-prefix="fas" data-icon="copy" class="svg-inline--fa fa-copy fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"></path></svg> Copy
+				</button>
+				<div>
+					<label id="wordWrapWrap" class="wwClick">
+						<input type="checkbox" checked="checked" id="wordWrap" class="wwClick"/>
+						word wrap
+					</label>
+					<span id="textCount">-</span>
+				</div>
+			</div>
+			<pre><code contenteditable="true" tabindex="0" spellcheck="false" id="inputText" class="enableWrap"></code></pre>
+			<span id="hint" style="font-size: 10px;">Enter text above to get rolling. Then choose a new format.</span>
+		</div>
+	</div>
+	<script src="timely.js"></script>
+</body>
+</html>
