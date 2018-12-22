@@ -1,7 +1,7 @@
-/* global updateExample, getThing, saveThing, FORMAT, ADD_SPACE_HEX, SETTING_DATE, SETTING_FORGET, SETTING_HEX */
+/* global updateExample, getThing, saveThing, FORMAT, ADD_SPACE_HEX, LS_KEY_DATE, LS_KEY_FORGET, LS_KEY_HEX */
 
 // load date format setting on startup
-getThing(SETTING_DATE, (formatSetting) => {
+getThing(LS_KEY_DATE, (formatSetting) => {
 	if (!formatSetting) {
 		document.querySelector('#dateFormat').value = FORMAT;
 	} else {
@@ -11,7 +11,7 @@ getThing(SETTING_DATE, (formatSetting) => {
 });
 
 // load forget setting on startup
-getThing(SETTING_FORGET, (forgetSetting) => {
+getThing(LS_KEY_FORGET, (forgetSetting) => {
 	if (forgetSetting === document.getElementById('memorySetting1').value) {
 		document.getElementById('memorySetting1').checked = true;
 	} else if (forgetSetting === document.getElementById('memorySetting2').value) {
@@ -24,7 +24,7 @@ getThing(SETTING_FORGET, (forgetSetting) => {
 });
 
 // load hex space setting
-getThing(SETTING_HEX, (hexSetting) => {
+getThing(LS_KEY_HEX, (hexSetting) => {
 	if (hexSetting === 'undefined' || hexSetting === null) {
 		document.getElementById('hexSpace').checked = ADD_SPACE_HEX;
 	} else {
@@ -35,8 +35,8 @@ getThing(SETTING_HEX, (hexSetting) => {
 // something was clicked
 document.addEventListener('click', (e) => {
 	if (e.target.id === 'reset') {
-		document.getElementById(SETTING_DATE).value = '%q %d, %Y %I:%m%p';
-		saveThing(SETTING_DATE, document.getElementById('dateFormat').value);
+		document.getElementById(LS_KEY_DATE).value = '%q %d, %Y %I:%m%p';
+		saveThing(LS_KEY_DATE, document.getElementById('dateFormat').value);
 		flash_save();
 	}
 
@@ -51,12 +51,12 @@ document.addEventListener('click', (e) => {
 		if (document.getElementById('memorySetting3').checked) {
 			val = document.getElementById('memorySetting3').value;
 		}
-		saveThing(SETTING_FORGET, val);
+		saveThing(LS_KEY_FORGET, val);
 		flash_save();
 	}
 
 	if (e.target.id === 'hexSpace') {
-		saveThing(SETTING_HEX, document.getElementById('hexSpace').checked);
+		saveThing(LS_KEY_HEX, document.getElementById('hexSpace').checked);
 		flash_save();
 	}
 });
@@ -65,7 +65,7 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keyup', e => {
 	if (e.target.id === 'dateFormat') {
 		updateExample();
-		saveThing(SETTING_DATE, document.getElementById('dateFormat').value);
+		saveThing(LS_KEY_DATE, document.getElementById('dateFormat').value);
 		flash_save();
 	}
 });

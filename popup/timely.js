@@ -1,5 +1,5 @@
 /* eslint no-bitwise: 0 */
-/* global formatDate, getThing, saveThing, SETTING_DATE, SETTING_TIME, SETTING_HEX, SETTING_FORGET, EXPIRATION, FORMAT, ADD_SPACE_HEX, SETTING_TEXT */
+/* global formatDate, getThing, saveThing, LS_KEY_DATE, LS_KEY_TIME, LS_KEY_HEX, LS_KEY_FORGET, EXPIRATION, FORMAT, ADD_SPACE_HEX, LS_KEY_TEXT */
 let auto_ts_units = true;
 let use_offset = true;
 updateNow();
@@ -7,21 +7,21 @@ listenHereSon();
 showUnits('ms');
 updateOffsetText();
 
-getThing(SETTING_DATE, (fmt) => {
+getThing(LS_KEY_DATE, (fmt) => {
 	if (fmt) {
 		FORMAT = fmt;
 	}
 	console.log('[settings] date format setting', FORMAT);
 });
 
-getThing(SETTING_HEX, (setting) => {
+getThing(LS_KEY_HEX, (setting) => {
 	if (setting !== 'undefined' && setting !== null) {
 		ADD_SPACE_HEX = setting;
 	}
 	console.log('[settings] hex space setting', ADD_SPACE_HEX);
 });
 
-getThing(SETTING_FORGET, (forgetSetting) => {
+getThing(LS_KEY_FORGET, (forgetSetting) => {
 	if (forgetSetting === 'onclose') {
 		EXPIRATION = 0;
 	}
@@ -35,7 +35,7 @@ getThing(SETTING_FORGET, (forgetSetting) => {
 });
 
 // retrieve past input text if available
-getThing(SETTING_TEXT, (text) => {
+getThing(LS_KEY_TEXT, (text) => {
 	if (text !== 'undefined') {
 		console.log('[text] loading input text');
 		document.getElementById('inputText').innerText = text;
@@ -43,7 +43,7 @@ getThing(SETTING_TEXT, (text) => {
 });
 
 // retrieve past input timestamp if available
-getThing(SETTING_TIME, (timestamp) => {
+getThing(LS_KEY_TIME, (timestamp) => {
 	if (timestamp !== 'undefined') {
 		console.log('[text] loading input text');
 		document.getElementById('inputTs').value = timestamp;
@@ -68,12 +68,12 @@ function listenHereSon() {
 		if (e.target.id === 'inputTs') {
 			convert4humans();
 			updateNow();
-			saveThing(SETTING_TIME, document.getElementById('inputTs').value, true);
+			saveThing(LS_KEY_TIME, document.getElementById('inputTs').value, true);
 		}
 
 		if (e.target.id === 'inputText') {
 			countText();
-			saveThing(SETTING_TEXT, document.getElementById('inputText').innerText, true);
+			saveThing(LS_KEY_TEXT, document.getElementById('inputText').innerText, true);
 		}
 	});
 
@@ -138,7 +138,7 @@ function listenHereSon() {
 			document.querySelector('#inputText').classList.add('jsonError');
 		}
 		countText();
-		saveThing(SETTING_TEXT, document.getElementById('inputText').innerText, true);
+		saveThing(LS_KEY_TEXT, document.getElementById('inputText').innerText, true);
 
 		// open format text panel
 		if (e.target.classList.contains('openTextPanel')) {

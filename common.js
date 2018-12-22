@@ -5,11 +5,11 @@ let ADD_SPACE_HEX = true;					// default
 let EXPIRATION = 1000 * 60 * 5;				// default
 
 // local storage keys
-const SETTING_DATE = 'dateFormat';
-const SETTING_FORGET = 'forget';
-const SETTING_HEX = 'hexSpace';
-const SETTING_TEXT = 'textInput';
-const SETTING_TIME = 'timeInput';
+const LS_KEY_DATE = 'dateFormat';
+const LS_KEY_FORGET = 'forget';
+const LS_KEY_HEX = 'hexSpace';
+const LS_KEY_TEXT = 'textInput';
+const LS_KEY_TIME = 'timeInput';
 
 // save something to the local storage
 function saveThing(item, value, expires) {
