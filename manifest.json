@@ -7,7 +7,12 @@
 	"icons": {
 		"48": "icons/timely-48.png"
 	},
-	"permissions": [],
+	"permissions": [
+		"storage"
+	],
+	"options_ui": {
+		"page": "options/index.html"
+	},
 	"browser_action": {
 		"default_icon": "icons/timely-32.png",
 		"theme_icons": [
@@ -20,5 +25,10 @@
 		"default_title": "Timely",
 		"default_popup": "popup/timely.html"
 	},
-	"web_accessible_resources": []
+	"web_accessible_resources": [],
+	"applications": {
+		"gecko": {
+			"id": "addon2@example.com"
+		}
+	}
 }

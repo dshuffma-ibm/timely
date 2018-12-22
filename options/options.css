@@ -1,0 +1,32 @@
+h1 {
+	color: #777;
+	font-size: 24px;
+}
+h2{
+	color: #777;
+	font-size: 18px;
+}
+input{
+	margin-bottom: 12px;
+}
+
+#dateFormat{
+	padding: 6px 4px;
+	color: #444;
+	font-weight: 600;
+	width: 200px;
+}
+#saved{
+	position: absolute;
+	margin: auto;
+	width: 100%;
+	text-align: center;
+}
+
+.formatWraps{
+	font-family: monospace;
+	font-size: 14px;
+}
+.hidden{
+	display: none !important;
+}

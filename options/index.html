@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="options.css" />
+</head>
+
+<body>
+	<div id="saved" class="hidden">
+		Saved
+	</div>
+	<br/>
+	<h2>Save or Forget Data</h2>
+	<label>
+		<input id="memorySetting1" type="radio" name="forget" value="onclose" class="forget" checked="">
+		Forget input data once timely is closed
+	</label>
+	<label>
+		<input id="memorySetting2" type="radio" name="forget" value="minutes" class="forget" checked="checked">
+		Forget input data after 5 minutes (default)
+	</label>
+	<label>
+		<input id="memorySetting3" type="radio" name="forget" value="forever" class="forget" checked="">
+		Keep input data
+	</label>
+
+	<h2>
+		Date Format
+		<button id="reset">Reset</button>
+	</h2>
+	<div class="formatWraps">
+		<input id="dateFormat" type="text" value="%q %d, %Y %I:%m%p">
+		<span id="exampleDate"></span>
+		<div><strong>%Y</strong> - Year (ex 1988)</div>
+		<div><strong>%M</strong> - Month as xx (ex 01)</div>
+		<div><strong>%n</strong> - Month as x (ex 1)</div>
+		<div><strong>%Q</strong> - Month as its name (ex October)</div>
+		<div><strong>%q</strong> - Month as its abbreviated name (ex Oct)</div>
+		<div><strong>%d</strong> - Day as xx (ex 01)</div>
+		<div><strong>%D</strong> - Day as x (ex 1)</div>
+		<div><strong>%H</strong> - 24 Hour as xx (ex 23)</div>
+		<div><strong>%I</strong> - 12 Hour as xx (ex 12)</div>
+		<div><strong>%p</strong> - am/pm (ex am)</div>
+		<div><strong>%P</strong> - AM/PM (ex AM)</div>
+		<div><strong>%m</strong> - Minutes as xx (ex 05)</div>
+		<div><strong>%s</strong> - Seconds as xx (ex 06)</div>
+		<div><strong>%r</strong> - Milliseconds as xxx (ex 001)</div>
+		<div><strong>%z</strong> - UTC timestamp (ex 594014400000)</div>
+	</div>
+
+	<h2>Hex Format</h2>
+	<label>
+		<input id="hexSpace" type="checkbox" checked="checked">
+		Add a space between every 2 characters
+	</label>
+
+	<br />
+
+
+	<script src="../common.js"></script>
+	<script src="options.js"></script>
+</body>
+
+</html>

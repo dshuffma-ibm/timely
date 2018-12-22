@@ -1,4 +1,5 @@
 /* eslint no-bitwise: 0 */
+/* global formatDate, getThing, saveThing, SETTING_DATE, SETTING_TIME, SETTING_HEX, SETTING_FORGET, EXPIRATION, FORMAT, ADD_SPACE_HEX, SETTING_TEXT */
 let auto_ts_units = true;
 let use_offset = true;
 updateNow();
@@ -6,10 +7,57 @@ listenHereSon();
 showUnits('ms');
 updateOffsetText();
 
+getThing(SETTING_DATE, (fmt) => {
+	if (fmt) {
+		FORMAT = fmt;
+	}
+	console.log('[settings] date format setting', FORMAT);
+});
+
+getThing(SETTING_HEX, (setting) => {
+	if (setting !== 'undefined' && setting !== null) {
+		ADD_SPACE_HEX = setting;
+	}
+	console.log('[settings] hex space setting', ADD_SPACE_HEX);
+});
+
+getThing(SETTING_FORGET, (forgetSetting) => {
+	if (forgetSetting === 'onclose') {
+		EXPIRATION = 0;
+	}
+	if (forgetSetting === 'minutes') {
+		EXPIRATION = 1000 * 60 * 5;
+	}
+	if (forgetSetting === 'forever') {
+		EXPIRATION = Date.now() * 2;		// any distance future timestamp
+	}
+	console.log('[settings] forget expiration setting', EXPIRATION);
+});
+
+// retrieve past input text if available
+getThing(SETTING_TEXT, (text) => {
+	if (text !== 'undefined') {
+		console.log('[text] loading input text');
+		document.getElementById('inputText').innerText = text;
+	}
+});
+
+// retrieve past input timestamp if available
+getThing(SETTING_TIME, (timestamp) => {
+	if (timestamp !== 'undefined') {
+		console.log('[text] loading input text');
+		document.getElementById('inputTs').value = timestamp;
+	}
+});
+
 // update everything all the time
 setInterval(function () {
-	convert4humans();
-	updateNow();
+	try {
+		convert4humans();
+		updateNow();
+	} catch (e) {
+		console.error(e);
+	}
 }, 300);
 
 document.getElementById('inputTs').focus();
@@ -20,15 +68,16 @@ function listenHereSon() {
 		if (e.target.id === 'inputTs') {
 			convert4humans();
 			updateNow();
+			saveThing(SETTING_TIME, document.getElementById('inputTs').value, true);
 		}
 
 		if (e.target.id === 'inputText') {
 			countText();
+			saveThing(SETTING_TEXT, document.getElementById('inputText').innerText, true);
 		}
 	});
 
 	document.addEventListener('click', (e) => {
-		//console.log('[button] clicked', e.target);
 
 		// toggle auto/sec units button
 		if (e.target.id === 'unitsButton') {
@@ -89,6 +138,7 @@ function listenHereSon() {
 			document.querySelector('#inputText').classList.add('jsonError');
 		}
 		countText();
+		saveThing(SETTING_TEXT, document.getElementById('inputText').innerText, true);
 
 		// open format text panel
 		if (e.target.classList.contains('openTextPanel')) {
@@ -135,7 +185,7 @@ function convert4humans() {
 			document.querySelector('#output').classList.remove('error');
 		} else {													// if a number is provided show the date in the output
 			ts_ms = conform_2_ms(rawInput);
-			let formated = formatDate(ts_ms, '%q %d, %Y %I:%m%p');
+			let formated = formatDate(ts_ms, FORMAT);
 			if (formated) {
 				document.querySelector('#output').classList.remove('error');
 			} else {
@@ -152,7 +202,7 @@ function convert4humans() {
 // update the current ts and date (right NOW)
 function updateNow() {
 	let rightNow = Date.now();
-	updateIfDiff('#nowFriendly', formatDate(rightNow, '%q %d, %Y %I:%m%p'));
+	updateIfDiff('#nowFriendly', formatDate(rightNow, FORMAT));
 	document.querySelector('#now').innerText = rightNow.toString().trim();
 }
 
@@ -227,70 +277,6 @@ function friendlyMs(ms) {
 		ret = '+' + ret;
 	}
 	return ret;
-}
-
-//------------------------------------------------------------
-// format a date from timestamp
-//------------------------------------------------------------
-function formatDate(timestamp_ms, fmt) {
-	let d = new Date();
-	let offset_ms = d.getTimezoneOffset() * 60 * 1000;
-	let months = ['Jan', 'Feb', 'March', 'April', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-	if (!use_offset) {
-		offset_ms = 0;
-	}
-
-	function pad(value) {
-		return (value.toString().length < 2) ? '0' + value : value;
-	}
-
-	if (!timestamp_ms || isNaN(timestamp_ms)) {
-		return null;
-	} else {
-		let date = new Date(timestamp_ms - offset_ms);
-		if (isNaN(date.getTime())) {
-			return null;
-		}
-		return fmt.replace(/%([a-zA-Z])/g, function (_, fmtCode) {
-			let tmp;
-			switch (fmtCode) {
-				case 'Y':								//Year
-					return date.getUTCFullYear();
-				case 'M':								//Month 0 padded
-					return pad(date.getUTCMonth() + 1);
-				case 'q':								//Month name, 'Oct'
-					return months[date.getUTCMonth()];
-				case 'd':								//Date 0 padded
-					return pad(date.getUTCDate());
-				case 'H':								//24 Hour 0 padded
-					return pad(date.getUTCHours());
-				case 'I':								//12 Hour 0 padded
-					tmp = date.getUTCHours();
-					if (tmp === 0) { tmp = 12; }		//00:00 should be seen as 12:00am
-					else if (tmp > 12) { tmp -= 12; }
-					return pad(tmp);
-				case 'p':								//am / pm
-					tmp = date.getUTCHours();
-					if (tmp >= 12) { return 'pm'; }
-					return 'am';
-				case 'P':								//AM / PM
-					tmp = date.getUTCHours();
-					if (tmp >= 12) { return 'PM'; }
-					return 'AM';
-				case 'm':								//Minutes 0 padded
-					return pad(date.getUTCMinutes());
-				case 's':								//Seconds 0 padded
-					return pad(date.getUTCSeconds());
-				case 'r':								//Milliseconds 0 padded
-					return pad(date.getUTCMilliseconds(), 3);
-				case 'z':								//UTC timestamp
-					return date.getTime();
-				default:
-					console.warn('unsupported fmt for format date()', fmt);
-					return date.getTime();
-			}
-		});
-	}
 }
 
 // update the html of the element if it's value has changed, else leave it alone
@@ -454,7 +440,10 @@ function strToHexStr(str) {
 		if (temp.length <= 1) {
 			temp = '0' + temp;							// left pad a '0'
 		}
-		ret += temp + ' ';
+		ret += temp;
+		if (ADD_SPACE_HEX) {
+			ret += ' ';
+		}
 	}
 	return ret.trim();
 }
