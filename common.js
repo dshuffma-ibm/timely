@@ -10,25 +10,30 @@ const LS_KEY_FORGET = 'forget';
 const LS_KEY_HEX = 'hexSpace';
 const LS_KEY_TEXT = 'textInput';
 const LS_KEY_TIME = 'timeInput';
+const LS_KEY_OPEN = 'autoOpen';
 
 // save something to the local storage
 function saveThing(item, value, expires) {
-	const obj = {};
-	const data = {
-		value: value,
-	};
-	if (expires === true) {
-		data.expires = Date.now() + EXPIRATION;
+	try {
+		const obj = {};
+		const data = {
+			value: value,
+		};
+		if (expires === true) {
+			data.expires = Date.now() + EXPIRATION;
+		}
+		obj[item] = JSON.stringify(data);
+		browser.storage.sync.set(obj);
+		console.log('[settings] saved setting', item, obj);
+	} catch (e) {
+		console.error('[settings] could not save item', item, e);
 	}
-	obj[item] = JSON.stringify(data);
-	browser.storage.sync.set(obj);
-	console.log('[settings] saved setting', item);
 }
 
 // get a local storage item
 function getThing(item, cb) {
 	browser.storage.sync.get(item).then(function (storage) {
-		if (!storage || storage[item] === 'undefined') {
+		if (!storage || storage[item] === undefined) {
 			console.error('1 - item dne', item);
 			cb(null);
 		} else {

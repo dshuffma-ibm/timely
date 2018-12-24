@@ -1,5 +1,5 @@
 /* eslint no-bitwise: 0 */
-/* global formatDate, getThing, saveThing, LS_KEY_DATE, LS_KEY_TIME, LS_KEY_HEX, LS_KEY_FORGET, EXPIRATION, FORMAT, ADD_SPACE_HEX, LS_KEY_TEXT */
+/* global formatDate, getThing, saveThing, LS_KEY_DATE, LS_KEY_TIME, LS_KEY_HEX, LS_KEY_OPEN, LS_KEY_FORGET, EXPIRATION, FORMAT, ADD_SPACE_HEX, LS_KEY_TEXT */
 let auto_ts_units = true;
 let use_offset = true;
 updateNow();
@@ -15,7 +15,7 @@ getThing(LS_KEY_DATE, (fmt) => {
 });
 
 getThing(LS_KEY_HEX, (setting) => {
-	if (setting !== 'undefined' && setting !== null) {
+	if (setting !== undefined && setting !== null) {
 		ADD_SPACE_HEX = setting;
 	}
 	console.log('[settings] hex space setting', ADD_SPACE_HEX);
@@ -34,9 +34,17 @@ getThing(LS_KEY_FORGET, (forgetSetting) => {
 	console.log('[settings] forget expiration setting', EXPIRATION);
 });
 
+getThing(LS_KEY_OPEN, (autoOpen) => {
+	if (autoOpen === true) {
+		console.log('[auto-open] opening text formatter panel');
+		openTextFormatter();
+	}
+	console.log('[settings] hex space setting', autoOpen);
+});
+
 // retrieve past input text if available
 getThing(LS_KEY_TEXT, (text) => {
-	if (text !== 'undefined') {
+	if (text !== undefined) {
 		console.log('[text] loading input text');
 		document.getElementById('inputText').innerText = text;
 	}
@@ -44,7 +52,7 @@ getThing(LS_KEY_TEXT, (text) => {
 
 // retrieve past input timestamp if available
 getThing(LS_KEY_TIME, (timestamp) => {
-	if (timestamp !== 'undefined') {
+	if (timestamp !== undefined) {
 		console.log('[text] loading input text');
 		document.getElementById('inputTs').value = timestamp;
 	}
@@ -143,9 +151,7 @@ function listenHereSon() {
 		// open format text panel
 		if (e.target.classList.contains('openTextPanel')) {
 			console.log('[button] clicked the open text format panel button');
-			document.querySelector('.openPanelWrap').classList.add('hidden');
-			document.querySelector('#textPanel').classList.remove('hidden');
-			document.getElementById('inputText').focus();
+			openTextFormatter();
 		}
 
 		// toggle word wrap
@@ -168,6 +174,13 @@ function listenHereSon() {
 			}, 200);
 		}
 	});
+}
+
+// open the text format section
+function openTextFormatter() {
+	document.querySelector('.openPanelWrap').classList.add('hidden');
+	document.querySelector('#textPanel').classList.remove('hidden');
+	document.getElementById('inputText').focus();
 }
 
 // convert the ts in the input box to a human friendly string
