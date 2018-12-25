@@ -14,3 +14,10 @@ Save time with Timely.
 **The date format** (and other customizations) **can be changed in your "Add-ons" -> "Extensions" -> "Options" tab.**
 
 ![](timely.png)
+
+>
+	"applications": {
+		"gecko": {
+			"id": "addon2@example.com"
+		}
+	}
