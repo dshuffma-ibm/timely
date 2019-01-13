@@ -1,5 +1,6 @@
 /* eslint no-bitwise: 0 */
-/* global formatDate, getThing, saveThing, LS_KEY_DATE, LS_KEY_TIME, LS_KEY_HEX, LS_KEY_OPEN, LS_KEY_FORGET, EXPIRATION, FORMAT, ADD_SPACE_HEX, LS_KEY_TEXT */
+/* global formatDate, getThing, saveThing, LS_KEY_DATE, LS_KEY_TIME, LS_KEY_HEX, LS_KEY_OPEN, LS_KEY_FORGET, LS_KEY_TEXT, LS_KEY_ENDINGS */
+/* global formatDate, getThing, saveThing, EXPIRATION, FORMAT, ADD_SPACE_HEX, LINE_ENDING */
 let auto_ts_units = true;
 let use_offset = true;
 updateNow();
@@ -58,6 +59,14 @@ getThing(LS_KEY_TIME, (timestamp) => {
 	}
 });
 
+// retrieve line endings setting
+getThing(LS_KEY_ENDINGS, (lineEndings) => {
+	if (lineEndings !== undefined) {
+		console.log('[settings] loading line endings');
+		LINE_ENDING = lineEndings;
+	}
+});
+
 // update everything all the time
 setInterval(function () {
 	try {
@@ -109,33 +118,33 @@ function listenHereSon() {
 			let textInput = document.getElementById('inputText').innerText;
 			document.querySelector('#inputText').classList.remove('jsonError');
 			if (e.target.classList.contains('encode64')) {
-				document.querySelector('#inputText').innerText = b64(textInput);
+				document.querySelector('#inputText').innerText = b64(line_endings(textInput));
 			} else if (e.target.classList.contains('decode64')) {
-				document.querySelector('#inputText').innerText = fromB64(textInput);
+				document.querySelector('#inputText').innerText = fromB64(line_endings(textInput));
 			} else if (e.target.classList.contains('encodeTxt')) {
-				document.querySelector('#inputText').innerText = encodeChars(textInput);
+				document.querySelector('#inputText').innerText = encodeChars(line_endings(textInput));
 			} else if (e.target.classList.contains('decodeTxt')) {
-				document.querySelector('#inputText').innerText = decodeChars(textInput);
+				document.querySelector('#inputText').innerText = decodeChars(line_endings(textInput));
 			} else if (e.target.classList.contains('pretty')) {
-				document.querySelector('#inputText').innerHTML = prettyPrint(textInput);
+				document.querySelector('#inputText').innerHTML = prettyPrint(line_endings(textInput));
 				let text = document.getElementById('inputText').innerText;
 				if (text.indexOf('%3C') >= 0) {
 					document.querySelector('#inputText').innerText = urlDecode(text);
 				}
 			} else if (e.target.classList.contains('stringify')) {
-				document.querySelector('#inputText').innerText = stringify(textInput);
+				document.querySelector('#inputText').innerText = stringify(line_endings(textInput));
 			} else if (e.target.classList.contains('urlEncode')) {
-				document.querySelector('#inputText').innerText = urlEncode(textInput);
+				document.querySelector('#inputText').innerText = urlEncode(line_endings(textInput));
 			} else if (e.target.classList.contains('urlDecode')) {
-				document.querySelector('#inputText').innerText = urlDecode(textInput);
+				document.querySelector('#inputText').innerText = urlDecode(line_endings(textInput));
 			} else if (e.target.classList.contains('hexStr')) {
-				document.querySelector('#inputText').innerText = strToHexStr(textInput);
+				document.querySelector('#inputText').innerText = strToHexStr(line_endings(textInput));
 			} else if (e.target.classList.contains('str')) {
-				document.querySelector('#inputText').innerText = hexStrToStr(textInput);
+				document.querySelector('#inputText').innerText = hexStrToStr(line_endings(textInput));
 			} else if (e.target.classList.contains('sort')) {
-				document.querySelector('#inputText').innerHTML = sortInput(textInput);
+				document.querySelector('#inputText').innerHTML = sortInput(line_endings(textInput));
 			} else if (e.target.classList.contains('copy')) {
-				copyTextButton(textInput);
+				copyTextButton(line_endings(textInput));
 				document.querySelector('#inputText').classList.add('success');
 				setTimeout(() => {
 					document.querySelector('#inputText').classList.remove('success');
@@ -324,13 +333,14 @@ function fromB64(text) {
 
 // encode chars
 function encodeChars(text) {
+	text = decodeChars(text);		// if you decode first we won't aggregate extra slashes
 	let temp = JSON.stringify(text).replace(/\\"/g, '"');
 	return temp.substring(1, 1) + temp.substring(1, temp.length - 1);
 }
 
 // decode chars
 function decodeChars(text) {
-	return text.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+	return text.replace(/\\r\\n/g, '\\n').replace(/\\n/g, '\n').replace(/\\t/g, '\t');
 }
 
 // pretty print JSON
@@ -555,4 +565,15 @@ function sortItOut(unsorted) {
 	function isObject(o) {
 		return o instanceof Object && o.constructor === Object;
 	}
+}
+
+// convert \r\n line endings to \n or vise versa
+function line_endings(txt) {
+	if (LINE_ENDING === 'unix') {
+		return txt.replace(/\r\n/g, '\n');
+	}
+	if (LINE_ENDING === 'windows') {
+		return txt.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n'); // if you convert to unix first we won't aggregate extra \r's
+	}
+	return txt;
 }

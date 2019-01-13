@@ -1,4 +1,5 @@
-/* global browser, updateExample, getThing, saveThing, ADD_SPACE_HEX, LS_KEY_OPEN, LS_KEY_DATE, LS_KEY_FORGET, LS_KEY_HEX, LS_KEY_TEXT, LS_KEY_TIME */
+/* global browser, updateExample, getThing, saveThing, ADD_SPACE_HEX,*/
+/* global LS_KEY_OPEN, LS_KEY_DATE, LS_KEY_FORGET, LS_KEY_HEX, LS_KEY_TEXT, LS_KEY_TIME, LS_KEY_ENDINGS */
 
 //browser.storage.sync.clear();
 //console.log('cleared settings');
@@ -47,6 +48,19 @@ getThing(LS_KEY_OPEN, (autoOpen) => {
 	}
 });
 
+// load line endings setting
+getThing(LS_KEY_ENDINGS, (lineEndings) => {
+	if (lineEndings === document.getElementById('lineEnding1').value) {
+		document.getElementById('lineEnding1').checked = true;
+	} else if (lineEndings === document.getElementById('lineEnding2').value) {
+		document.getElementById('lineEnding2').checked = true;
+	} else if (lineEndings === document.getElementById('lineEnding3').value) {
+		document.getElementById('lineEnding3').checked = true;
+	} else {
+		document.getElementById('lineEnding3').checked = true;		// default
+	}
+});
+
 // something was clicked
 document.addEventListener('click', (e) => {
 	if (e.target.id === 'reset') {
@@ -76,6 +90,21 @@ document.addEventListener('click', (e) => {
 
 	if (e.target.id === 'autoOpen') {
 		saveThing(LS_KEY_OPEN, document.getElementById('autoOpen').checked);
+		flash_save();
+	}
+
+	if (e.target.classList.contains('lendings')) {
+		let val = '?';
+		if (document.getElementById('lineEnding1').checked) {
+			val = document.getElementById('lineEnding1').value;
+		}
+		if (document.getElementById('lineEnding2').checked) {
+			val = document.getElementById('lineEnding2').value;
+		}
+		if (document.getElementById('lineEnding3').checked) {
+			val = document.getElementById('lineEnding3').value;
+		}
+		saveThing(LS_KEY_ENDINGS, val);
 		flash_save();
 	}
 });

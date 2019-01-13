@@ -3,6 +3,7 @@
 let FORMAT = '%q %d, %Y %I:%m%p';			// default
 let ADD_SPACE_HEX = true;					// default
 let EXPIRATION = 1000 * 60 * 5;				// default
+let LINE_ENDING = 'unix';					// default
 
 // local storage keys
 const LS_KEY_DATE = 'dateFormat';
@@ -11,6 +12,7 @@ const LS_KEY_HEX = 'hexSpace';
 const LS_KEY_TEXT = 'textInput';
 const LS_KEY_TIME = 'timeInput';
 const LS_KEY_OPEN = 'autoOpen';
+const LS_KEY_ENDINGS = 'lineEndings';
 
 // save something to the local storage
 function saveThing(item, value, expires) {
