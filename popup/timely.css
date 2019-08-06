@@ -221,3 +221,20 @@ pre strong, pre strong *, pre strong * *{	/*boolean*/
 	cursor: pointer;
 	transition: ease 0.5s;
 }
+
+#scroll2top{
+	background: #fff;
+	color:#6c7886;
+	font-size: 11px;
+	text-align: right;
+	margin: 0;
+	cursor: pointer;
+	position: fixed;
+	top: 10px;
+	right: 10px;
+	padding: 6px 10px;
+	border-radius: 50px;
+}
+#scroll2top:hover{
+	color: #032F62;
+}

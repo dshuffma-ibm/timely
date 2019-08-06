@@ -72,6 +72,14 @@ setInterval(function () {
 	try {
 		convert4humans();
 		updateNow();
+
+		// hide or show the scroll to top button
+		const top = document.getElementById('htmlId').scrollTop;
+		if (top >= 200) {
+			document.querySelector('#scroll2top').classList.remove('hidden');
+		} else {
+			document.querySelector('#scroll2top').classList.add('hidden');
+		}
 	} catch (e) {
 		console.error(e);
 	}
@@ -113,6 +121,12 @@ function listenHereSon() {
 			updateOffsetText();
 		}
 
+		// scroll to top
+		if (e.target.id === 'scroll2top') {
+			document.getElementById('htmlId').scrollTop = 0;
+			return;
+		}
+
 		// format text buttons
 		try {
 			let textInput = document.getElementById('inputText').innerText;
@@ -144,11 +158,11 @@ function listenHereSon() {
 			} else if (e.target.classList.contains('sort')) {
 				document.querySelector('#inputText').innerHTML = sortInput(line_endings(textInput));
 			} else if (e.target.classList.contains('copy')) {
-				copyTextButton(line_endings(textInput));
 				document.querySelector('#inputText').classList.add('success');
+				copyTextButton(line_endings(textInput));
 				setTimeout(() => {
 					document.querySelector('#inputText').classList.remove('success');
-				}, 200);
+				}, 250);
 			}
 		} catch (e) {
 			console.error(e);
