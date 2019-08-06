@@ -157,6 +157,12 @@ function listenHereSon() {
 				document.querySelector('#inputText').innerText = hexStrToStr(line_endings(textInput));
 			} else if (e.target.classList.contains('sort')) {
 				document.querySelector('#inputText').innerHTML = sortInput(line_endings(textInput));
+			} else if (e.target.classList.contains('escape')) {
+				document.querySelector('#inputText').innerHTML = escapeIt(line_endings(textInput));
+			} else if (e.target.classList.contains('unescape')) {
+				document.querySelector('#inputText').innerHTML = unescapeIt(line_endings(textInput));
+			} else if (e.target.classList.contains('clear')) {
+				document.querySelector('#inputText').innerHTML = '';
 			} else if (e.target.classList.contains('copy')) {
 				document.querySelector('#inputText').classList.add('success');
 				copyTextButton(line_endings(textInput));
@@ -226,7 +232,7 @@ function convert4humans() {
 				document.querySelector('#output').classList.remove('error');
 			} else {
 				document.querySelector('#output').classList.add('error');
-				formated = 'Try again bud, like a number this time';
+				formated = 'Try again bud, like a number';
 			}
 			updateIfDiff('#output', formated);
 		}
@@ -590,4 +596,14 @@ function line_endings(txt) {
 		return txt.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n'); // if you convert to unix first we won't aggregate extra \r's
 	}
 	return txt;
+}
+
+// escape the string
+function escapeIt(str) {
+	return str.replace(/"/g, '\\"');
+}
+
+// unescape the string
+function unescapeIt(str) {
+	return str.replace(/\\"/g, '"');
 }
