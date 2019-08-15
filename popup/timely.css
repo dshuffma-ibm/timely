@@ -51,9 +51,14 @@ button:hover{
 	min-width: 100px;
 }
 
-#elapsedWrapper{
+#elapsedWrapper, #timezoneButton{
 	float: right;
 	text-align: right;
+	margin-right: 16px;
+	font-weight: 200;
+}
+#elapsedWrapper{
+	margin-right: 24px;
 }
 .outputWrap, .inputWrap{
 	font-weight: 700;
@@ -93,6 +98,7 @@ button:hover{
 .nowWrap, .diffWrap{
 	margin-bottom: 2px;
 }
+
 .hidden{
 	display: none;
 }
