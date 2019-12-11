@@ -637,11 +637,21 @@ function unescapeIt(str) {
 */
 function js2json(str) {
 	// 1. add double quotes on all object keys
-	// 2. replace all object values with single quotes w/double quotes
-	// 3. remove trailing commas in objects
-	// 4. remove trailing commas in arrays
-	//     str. [1]                          . [2]                       . [3]                               . [4]
-	return str.replace(/(\w+)\s*:/g, '"$1":').replace(/'(\w+)'/g, '"$1"').replace(/(\{[\S\s]+),\s*}/g, '$1}').replace(/(\[[\S\s]+),\s*]/g, '$1]');
+	// 2. replace all object values that have single quotes w/double quotes
+	// 3. remove trailing commas in objects (it could be x sequential trailing commas in 1 field or many different fields in the input text)
+	// 4. remove trailing commas in arrays (^^ ditto)
+	//           .[1]                           .[2]
+	let ret = str.replace(/(\w+)\s*:/g, '"$1":').replace(/'(\w+)'/g, '"$1"');
+
+	for (let i = 0; i <= 1000; i++) {				// repeat for x number of trailing commas. limit the amount of time we spend here...
+		const before = ret.length;
+
+		//       .[3]                                .[4]
+		ret = ret.replace(/(\{[\S\s]+),\s*}/g, '$1}').replace(/(\[[\S\s]+),\s*]/g, '$1]');
+		if (before === ret.length) { break; }		// once the length stopped changing, we are done
+	}
+	return ret;
+
 }
 
 // convert a json string to js object w/single quotes
