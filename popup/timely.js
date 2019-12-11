@@ -156,14 +156,21 @@ function listenHereSon() {
 			} else if (e.target.classList.contains('str')) {
 				document.querySelector('#inputText').innerText = hexStrToStr(line_endings(textInput));
 			} else if (e.target.classList.contains('sort')) {
-				document.querySelector('#inputText').innerHTML = sortInput(line_endings(textInput));
+				document.querySelector('#inputText').innerHTML = sortInput(line_endings(textInput), true);
+			} else if (e.target.classList.contains('sortKeys')) {
+				document.querySelector('#inputText').innerHTML = sortInput(line_endings(textInput), false);
 			} else if (e.target.classList.contains('escape')) {
 				document.querySelector('#inputText').innerHTML = escapeIt(line_endings(textInput));
 			} else if (e.target.classList.contains('unescape')) {
 				document.querySelector('#inputText').innerHTML = unescapeIt(line_endings(textInput));
 			} else if (e.target.classList.contains('clear')) {
 				document.querySelector('#inputText').innerHTML = '';
-			} else if (e.target.classList.contains('copy')) {
+			} else if (e.target.classList.contains('js2json')) {
+				document.querySelector('#inputText').innerHTML = prettyPrint(js2json(line_endings(textInput)));
+			} else if (e.target.classList.contains('json2js')) {
+				document.querySelector('#inputText').innerHTML = json2js(line_endings(textInput));
+			}
+			else if (e.target.classList.contains('copy')) {
 				document.querySelector('#inputText').classList.add('success');
 				copyTextButton(line_endings(textInput));
 				setTimeout(() => {
@@ -537,43 +544,49 @@ function betterParse(text) {
 }
 
 // sort input str
-function sortInput(text) {
+function sortInput(text, sort_arrays) {
 	let temp = '';
 	const obj = betterParse(text);
-	temp = JSON.stringify(sortItOut(obj));			// sort it
+	temp = JSON.stringify(sortItOut(obj, sort_arrays));				// sort it
 	text = prettyPrint(temp);
 	return text;
 }
 
 // sort an object
-function sortItOut(unsorted) {
+function sortItOut(unsorted, sort_arrays) {
 	let ordered = {};
 	if (isObject(unsorted)) {
 		Object.keys(unsorted).sort(compareStrings).forEach(function (key) {
-			ordered[key] = unsorted[key];							//sort all the object's keys
+			ordered[key] = unsorted[key];							// sort all the object's keys
 		});
 	} else {
-		try {
-			ordered = unsorted.sort(compareStrings);				//sort the array of strings
-		} catch (e) {
-			ordered = unsorted.sort();								//sort the mixed array
+		if (sort_arrays === true) {
+			try {
+				ordered = unsorted.sort(compareStrings);			// sort the array of strings
+			} catch (e) {
+				ordered = unsorted.sort();							// sort the mixed array
+			}
+		} else {
+			ordered = unsorted;
 		}
 	}
 
 	for (let i in ordered) {
 		if (isObject(ordered[i])) {
-			ordered[i] = sortItOut(ordered[i]);						//sort all the object's object's keys
+			ordered[i] = sortItOut(ordered[i], sort_arrays);		// sort all the object's object's keys
 		} else if (Array.isArray(ordered[i])) {
 			for (let z in ordered[i]) {
 				if (ordered[i][z] && isObject(ordered[i][z])) {
-					ordered[i][z] = sortItOut(ordered[i][z]);		//sort the inner object
+					ordered[i][z] = sortItOut(ordered[i][z], sort_arrays);	// sort the inner object
 				}
 			}
 
-			try {
-				ordered[i] = ordered[i].sort(compareStrings);		//sort the array of strings
-			} catch (e) {
-				ordered[i] = ordered[i].sort();						//sort the array of ?
+			if (sort_arrays === true) {
+				try {
+					ordered[i] = ordered[i].sort(compareStrings);	// sort the array of strings
+				} catch (e) {
+					ordered[i] = ordered[i].sort();					// sort the array of ?
+				}
 			}
 		}
 	}
@@ -606,4 +619,32 @@ function escapeIt(str) {
 // unescape the string
 function unescapeIt(str) {
 	return str.replace(/\\"/g, '"');
+}
+
+// convert a js object to regular ole json
+/*
+	{
+		things: "stuff",
+		"stuff": "things",
+		'single': 'single',
+		'single': "double",
+		a : {
+			b: 1,
+			c: [0,1,2,3,],
+			david: 'this'
+		},
+	}
+*/
+function js2json(str) {
+	// 1. add double quotes on all object keys
+	// 2. replace all object values with single quotes w/double quotes
+	// 3. remove trailing commas in objects
+	// 4. remove trailing commas in arrays
+	//     str. [1]                          . [2]                       . [3]                               . [4]
+	return str.replace(/(\w+)\s*:/g, '"$1":').replace(/'(\w+)'/g, '"$1"').replace(/(\{[\S\s]+),\s*}/g, '$1}').replace(/(\[[\S\s]+),\s*]/g, '$1]');
+}
+
+// convert a json string to js object w/single quotes
+function json2js(str) {
+	return str.replace(/"(\w+)"\s*:\s*/g, '$1: ').replace(/"(\w+)"/g, '\'$1\'');
 }
