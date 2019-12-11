@@ -75,7 +75,7 @@ setInterval(function () {
 
 		// hide or show the scroll to top button
 		const top = document.getElementById('htmlId').scrollTop;
-		if (top >= 200) {
+		if (top >= 120) {
 			document.querySelector('#scroll2top').classList.remove('hidden');
 		} else {
 			document.querySelector('#scroll2top').classList.add('hidden');
