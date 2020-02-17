@@ -537,8 +537,8 @@ function betterParse(text) {
 		// first attempt - try as is
 		return JSON.parse(text);
 	} catch (e) {
-		// second attempt - try removing white space things
-		text = text.replace(/[\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g, '');
+		// second attempt - try removing special white space things with normal white space
+		text = text.replace(/[\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g, ' ');
 		return JSON.parse(text);
 	}
 }
@@ -627,7 +627,11 @@ function unescapeIt(str) {
 		things: "stuff",
 		"stuff": "things",
 		'single': 'single',
+		'has space': 'another space',
 		'single': "double",
+		'plus': "a + sign",
+		'dash-in': "name",
+		'empty': '',
 		a : {
 			b: 1,
 			c: [0,1,2,3,],
@@ -636,12 +640,12 @@ function unescapeIt(str) {
 	}
 */
 function js2json(str) {
-	// 1. add double quotes on all object keys
-	// 2. replace all object values that have single quotes w/double quotes
+	// 1. add double quotes on unquoted object keys
+	// 2. replace all object keys & values that have single quotes w/double quotes
 	// 3. remove trailing commas in objects (it could be x sequential trailing commas in 1 field or many different fields in the input text)
 	// 4. remove trailing commas in arrays (^^ ditto)
 	//           .[1]                           .[2]
-	let ret = str.replace(/(\w+)\s*:/g, '"$1":').replace(/'(\w+)'/g, '"$1"');
+	let ret = str.replace(/(\w+)\s*:/g, '"$1":').replace(/'([^'"]*)'/g, '"$1"');
 
 	for (let i = 0; i <= 1000; i++) {				// repeat for x number of trailing commas. limit the amount of time we spend here...
 		const before = ret.length;
@@ -651,10 +655,12 @@ function js2json(str) {
 		if (before === ret.length) { break; }		// once the length stopped changing, we are done
 	}
 	return ret;
-
 }
 
 // convert a json string to js object w/single quotes
 function json2js(str) {
-	return str.replace(/"(\w+)"\s*:\s*/g, '$1: ').replace(/"(\w+)"/g, '\'$1\'');
+	str = str.replace(/"([^'"]+)"\s*:\s*/g, '$1: ').replace(/"([^'"]*)"/g, '\'$1\'');
+
+	// put quotes around white space and dashes, could be multiple dashes in a key...
+	return str.replace(/\s*(.+-.+)\s*:/g, '\n\'$1\':').replace(/(\w+\s+\w+)\s*:/g, '\'$1\':');
 }
