@@ -101,11 +101,10 @@ let nested_obj_mixed2 = `{
 }`;
 let DEBUG = true;
 let test_cases = [
-	//missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2,
-	//missing_quote3, missing_quote4, missing_bracket, missing_bracket2, missing_bracket3, missing_bracket4,
-	//js_version, array_missing_comma, array_extra_comma, array_extra_comma2, array_extra_comma3,
-	//obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2, nested_obj_mixed2
-	nested_obj_mixed2
+	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2,
+	missing_quote3, missing_quote4, missing_bracket, missing_bracket2, missing_bracket3, missing_bracket4,
+	js_version, array_missing_comma, array_extra_comma, array_extra_comma2, array_extra_comma3,
+	obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2, nested_obj_mixed2
 ];
 let results = [];
 for (let i in test_cases) {
@@ -320,9 +319,9 @@ function fixIt(str, iter) {
 					if (c === '"') {
 						if (DEBUG) { console.log('detected missing comma 2'); }
 						let fixedStr = str.substring(0, i) + ',' + str.substring(i);
-						return fixIt(fixedStr, iter);
+						return fixIt(fixedStr, iter); //??????????
 					} else {
-						continue;					// its the end of a nested block, not end of string yet
+						// its the end of a nested block, not end of string yet
 					}
 				} else {
 					for (; openCurlyBrackets > 0; openCurlyBrackets--) {
@@ -341,6 +340,13 @@ function fixIt(str, iter) {
 			} else if (c === ']') {
 				parsing_history.pop();
 				state = lookingForCommaOrEnd;
+			} else if (c === '{') {
+				if (get_parsing() === 'arr') {
+					if (DEBUG) { console.log('detected missing comma 3'); }
+					ret = ret.substr(0, ret.length - 1) + ',';
+					state = lookingForBracket;
+					i--;							// repeat
+				}
 			}
 		}
 
