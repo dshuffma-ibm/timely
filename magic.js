@@ -105,13 +105,14 @@ let test_cases = [
 	missing_quote3, missing_quote4, missing_bracket, missing_bracket2, missing_bracket3, missing_bracket4,
 	js_version, array_missing_comma, array_extra_comma, array_extra_comma2, array_extra_comma3,
 	obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2, nested_obj_mixed2
+	//obj_extra_comma
 ];
 let results = [];
 for (let i in test_cases) {
 	let fixed = fixIt(test_cases[i]);
-	console.log('final:', fixed);
+	console.log('final:\n', fixed);
 	try {
-		JSON.stringify(JSON.parse(fixed), null, 2);
+		console.log('formatted:\n', JSON.stringify(JSON.parse(fixed), null, 2));
 		results.push('success');
 	} catch (e) {
 		results.push('error');
@@ -128,6 +129,8 @@ function fixIt(str, iter) {
 	const lookingForValueStart = Symbol('lookingForValueStart');
 	const lookingForValueEnd = Symbol('lookingForValueEnd');
 	const lookingForCommaOrEnd = Symbol('lookingForCommaOrEnd');
+	const ARRAY = Symbol('array');
+	const OBJECT = Symbol('object');
 	let prev_char = null;
 
 	console.log('-----------------');
@@ -152,16 +155,14 @@ function fixIt(str, iter) {
 	for (let i = 0; i < str.length; i++) {
 		let c = str[i];
 		ret += c;				// optimistically this character is good to go
-		if (c === ' ') {
+		if (c === ' ' || c === '\n' || c === '\t') {
 			continue;
 		}
 		prev_char = ret[ret.length - 2];
 
-		let state_str = state.toString();
-		state_str = state_str.substr(7);
-		state_str = state_str.substring(0, state_str.length - 1);
-
-		if (DEBUG) { console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + get_parsing(), prev_char); }
+		const state_str = symbol2str(state);
+		const parsing_str = symbol2str(get_parsing());
+		if (DEBUG) { console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str); }
 
 		if (c === '\\') {
 			escaped_character = true;
@@ -172,10 +173,10 @@ function fixIt(str, iter) {
 		if (state === lookingForBracket) {
 			if (c === '{' || c === '[') {
 				if (c === '[') {
-					parsing_history.push('arr');
+					parsing_history.push(ARRAY);
 				} else {
 					openCurlyBrackets++;
-					parsing_history.push('obj');
+					parsing_history.push(OBJECT);
 				}
 				state = lookingForKeyStart;
 			} else {
@@ -212,7 +213,7 @@ function fixIt(str, iter) {
 		// [lookingForKeyEnd]
 		else if (state === lookingForKeyEnd) {
 			if (c === '"') {
-				if (get_parsing() === 'arr') {
+				if (get_parsing() === ARRAY) {
 					state = lookingForCommaOrEnd;
 				} else {
 					state = lookingForColon;
@@ -241,9 +242,9 @@ function fixIt(str, iter) {
 		// [lookingForValueStart]
 		else if (state === lookingForValueStart) {
 			if (c === '[') {
-				parsing_history.push('arr');
+				parsing_history.push(ARRAY);
 			} else if (c === '{') {
-				parsing_history.push('obj');
+				parsing_history.push(OBJECT);
 			}
 
 			if (c === '"') {
@@ -315,15 +316,7 @@ function fixIt(str, iter) {
 			} else if (c === '}') {
 				openCurlyBrackets--;
 				parsing_history.pop();
-				if (i < str.length - 1) {
-					if (c === '"') {
-						if (DEBUG) { console.log('detected missing comma 2'); }
-						let fixedStr = str.substring(0, i) + ',' + str.substring(i);
-						return fixIt(fixedStr, iter); //??????????
-					} else {
-						// its the end of a nested block, not end of string yet
-					}
-				} else {
+				if (i === str.length - 1) {		// if at the end..
 					for (; openCurlyBrackets > 0; openCurlyBrackets--) {
 						if (DEBUG) { console.log('detected missing bracket 4'); }
 						ret += '}';
@@ -341,7 +334,7 @@ function fixIt(str, iter) {
 				parsing_history.pop();
 				state = lookingForCommaOrEnd;
 			} else if (c === '{') {
-				if (get_parsing() === 'arr') {
+				if (get_parsing() === ARRAY) {
 					if (DEBUG) { console.log('detected missing comma 3'); }
 					ret = ret.substr(0, ret.length - 1) + ',';
 					state = lookingForBracket;
@@ -381,4 +374,15 @@ function isStrictLetter(char) {
 		}
 	}
 	return false;
+}
+
+function symbol2str(sym) {
+	if (sym) {
+		let sym_str = sym.toString();
+		sym_str = sym_str.substr(7);
+		sym_str = sym_str.substring(0, sym_str.length - 1);
+		return sym_str;
+	} else {
+		return null;
+	}
 }
