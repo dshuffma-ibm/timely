@@ -140,6 +140,10 @@ let extra_bracket = `{
 	},
 }`;
 let empty_str = '{"empty": ""}';
+let arr_numbers = '[123]';
+let arr_numbers2 = '[123, "test"]';
+let arr_numbers3 = '[123, 456, 2]';
+let arr_numbers4 = '[123, 456, {"hi : "there"}]';
 let DEBUG = true;
 let test_cases = [
 	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2,
@@ -147,9 +151,10 @@ let test_cases = [
 	missing_bracket4, js_version, array_missing_comma, array_extra_comma, array_extra_comma2,
 	array_extra_comma3, obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2,
 	extra_quote3, nested_obj_mixed2, single_quotes, smaller_test, big_test,
-	line_break_mid_value, extra_bracket, empty_str
-	//nested_obj_mixed2
+	line_break_mid_value, extra_bracket, empty_str, arr_numbers, arr_numbers2,
+	arr_numbers3, arr_numbers4
 ];
+//test_cases = [missing_bracket3];
 let results = [];
 let pass = true;
 for (let i in test_cases) {
@@ -204,8 +209,12 @@ function fixIt(str, iter) {
 	if (DEBUG) { console.log('\nStart', str); }
 	for (let i = 0; i < str.length; i++) {
 		let c = str[i];
-		ret += c;				// optimistically this character is good to go
+		ret += c;										// optimistically this character is good to go
 		if (c === ' ' || c === '\n' || c === '\t') {
+			continue;
+		}
+		if (c === '\\') {
+			escaped_character = true;
 			continue;
 		}
 		prev_char = ret[ret.length - 2];
@@ -214,11 +223,6 @@ function fixIt(str, iter) {
 		const parsing_str = symbol2str(get_parsing());
 		if (DEBUG) {
 			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str, openCurlyBrackets);
-		}
-
-		if (c === '\\') {
-			escaped_character = true;
-			continue;
 		}
 
 		// [lookingForBracket]
@@ -236,19 +240,19 @@ function fixIt(str, iter) {
 				ret = ret.substr(0, ret.length - 1) + '{';
 				state = lookingForKeyStart;
 				openCurlyBrackets++;
-				i--;							// repeat
+				i--;									// repeat
 			}
 		}
 
 		// [lookingForKeyStart]
 		else if (state === lookingForKeyStart) {
-			if (c === '"') {					// its a string
+			if (c === '"') {							// its a string
 				state = lookingForKeyEnd;
-			} else if (isStrictLetter(c)) {
+			} else if (isValueCharacter(c)) {
 				if (DEBUG) { console.log('detected missing quote 1'); }
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForKeyEnd;
-				i--;							// repeat
+				i--;									// repeat
 			} else if (c === ']' || c === '}') {
 				if (prev_char === '{') {
 					state = lookingForKeyStart;
@@ -257,7 +261,7 @@ function fixIt(str, iter) {
 					if (DEBUG) { console.log('unexpected bracket, must be extra comma 1'); }
 					ret = ret.substr(0, ret.length - 2);
 					state = lookingForCommaOrEnd;
-					i--;							// repeat
+					i--;								// repeat
 				}
 			} else if (c === ',') {
 				if (parsingANumber) {
@@ -270,6 +274,9 @@ function fixIt(str, iter) {
 				}
 			} else if (c === '{') {
 				openCurlyBrackets++;
+			} else if (isStrictNumber(c)) {				// its a number
+				state = lookingForValueEnd;
+				parsingANumber = true;
 			}
 		}
 
@@ -285,12 +292,12 @@ function fixIt(str, iter) {
 				if (DEBUG) { console.log('detected missing quote 2'); }
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForColon;
-				i--;							// repeat
+				i--;									// repeat
 			} else if (c === '}') {
 				if (DEBUG) { console.log('detected missing quote 6'); }
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForCommaOrEnd;
-				i--;							// repeat
+				i--;									// repeat
 			}
 		}
 
@@ -312,22 +319,22 @@ function fixIt(str, iter) {
 
 			if (c === '"') {
 				state = lookingForValueEnd;
-			} else if (isStrictNumber(c)) {			// its a number
+			} else if (isStrictNumber(c)) {				// its a number
 				state = lookingForValueEnd;
 				parsingANumber = true;
-			} else if (c === '{') {					// its an object
+			} else if (c === '{') {						// its an object
 				state = lookingForKeyStart;
 				openCurlyBrackets++;
-			} else if (isStrictLetter(c) || c === '\'') {
+			} else if (isValueCharacter(c) || c === '\'') {
 				if (DEBUG) { console.log('detected missing quote 3'); }
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForKeyEnd;
-				i--;								// repeat
+				i--;									// repeat
 			} else if (c === ']') {
 				if (DEBUG) { console.log('unexpected bracket, must be extra comma 4'); }
 				ret = ret.substr(0, ret.length - 2);
 				state = lookingForCommaOrEnd;
-				i--;								// repeat
+				i--;									// repeat
 			}
 		}
 
@@ -426,9 +433,14 @@ function fixIt(str, iter) {
 			escaped_character = false;
 		}
 	}
-	if (DEBUG) { console.log('detected missing bracket 3'); }	// this is not the proper exit, if we made it here, missing closing curly bracket
-	ret += '}';
-	return ret;
+
+	if (openCurlyBrackets === 0) {						// if at the end..
+		return ret;
+	} else {
+		if (DEBUG) { console.log('detected missing bracket 3'); }	// this is not the proper exit, if we made it here, missing closing curly bracket
+		ret += '}';
+		return ret;
+	}
 
 	function get_parsing() {
 		return parsing_history.length > 0 ? parsing_history[parsing_history.length - 1] : null;
@@ -437,22 +449,12 @@ function fixIt(str, iter) {
 
 function isStrictNumber(char) {
 	let numbers = '0123456789';
-	for (let i in numbers) {
-		if (numbers[i] === char) {
-			return true;
-		}
-	}
-	return false;
+	return numbers.includes(char);
 }
 
-function isStrictLetter(char) {
-	let letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-	for (let i in letters) {
-		if (letters[i] === char) {
-			return true;
-		}
-	}
-	return false;
+function isValueCharacter(char) {
+	let letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+;:?.><=-`~';
+	return letters.includes(char);
 }
 
 function symbol2str(sym) {
