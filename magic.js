@@ -83,11 +83,10 @@ let extra_quote2 = `{
 	"hey": ""there"
 	"hi": 123
 }`;
-/*
 let extra_quote3 = `{
-	"hey": "there""		// identical to missing comma... can't fix
+	"hey": "there""
 	"hi": 123
-}`;*/
+}`;
 let nested_obj_mixed2 = `{
 	"hey": {
 		"boo": [
@@ -99,13 +98,42 @@ let nested_obj_mixed2 = `{
 	}
 	"hi": 123
 }`;
+let single_quotes = `{
+	'hey': 'there',
+	'hi': 123
+}`;
+let big_test = `{
+	things: "stuff",
+	"stuff": "things",
+	'single': 'single',
+	'has space': 'another space',
+	'single': "double",
+	'plus': "a + sign",
+	'dash-in': "name",
+	'empty': '',
+	a : {
+		b: 1,
+		c: [0,1,2,3,],
+		david: 'this',
+		e: {}
+	},
+}`;
+let smaller_test = `{
+	a: {
+		b: 1,
+		c: [0,1,2,3,],
+		david: 'this',
+		e: {}
+	},
+}`;
 let DEBUG = true;
 let test_cases = [
 	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2,
 	missing_quote3, missing_quote4, missing_bracket, missing_bracket2, missing_bracket3, missing_bracket4,
 	js_version, array_missing_comma, array_extra_comma, array_extra_comma2, array_extra_comma3,
-	obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2, nested_obj_mixed2
-	//obj_extra_comma
+	obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2, extra_quote3, nested_obj_mixed2,
+	single_quotes, smaller_test, big_test
+	//missing_comma, smaller_test, missing_quote4, missing_bracket2
 ];
 let results = [];
 for (let i in test_cases) {
@@ -143,7 +171,8 @@ function fixIt(str, iter) {
 	if (iter === undefined) { iter = 0; }
 	else { iter++; }
 
-	str = str.replace(/[\n\t]/g, '').trim();
+	// replace(/(\w+)\s*:/g, '"$1":')
+	str = str.replace(/""/g, '"').replace(/'([^'"]*)'/g, '"$1"').replace(/[\n\t]/g, '').trim();
 	let ret = '';
 
 	if (iter >= 10) {
@@ -197,16 +226,24 @@ function fixIt(str, iter) {
 				state = lookingForKeyEnd;
 				i--;							// repeat
 			} else if (c === ']' || c === '}') {
-				if (DEBUG) { console.log('unexpected bracket, must be extra comma 1'); }
-				parsing_history.pop();
-				ret = ret.substr(0, ret.length - 2);
-				state = lookingForCommaOrEnd;
-				i--;							// repeat
+				if (prev_char === '{') {
+					state = lookingForKeyStart;
+					// was an empty object, all is well
+				} else {
+					if (DEBUG) { console.log('unexpected bracket, must be extra comma 1'); }
+					ret = ret.substr(0, ret.length - 2);
+					state = lookingForCommaOrEnd;
+					i--;							// repeat
+				}
 			} else if (c === ',') {
-				if (DEBUG) { console.log('unexpected comma, must be extra comma 2'); }
-				parsing_history.pop();
-				ret = ret.substr(0, ret.length - 1);
-				state = lookingForKeyStart;
+				if (parsingANumber) {
+					state = lookingForKeyStart;
+				} else {
+					if (DEBUG) { console.log('unexpected comma, must be extra comma 2'); }
+					parsing_history.pop();
+					ret = ret.substr(0, ret.length - 1);
+					state = lookingForKeyStart;
+				}
 			}
 		}
 
@@ -260,6 +297,11 @@ function fixIt(str, iter) {
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForKeyEnd;
 				i--;								// repeat
+			} else if (c === ']') {
+				if (DEBUG) { console.log('unexpected bracket, must be extra comma 4'); }
+				ret = ret.substr(0, ret.length - 2);
+				state = lookingForCommaOrEnd;
+				i--;							// repeat
 			}
 		}
 
@@ -273,28 +315,32 @@ function fixIt(str, iter) {
 				} else {
 					state = lookingForCommaOrEnd;
 				}
-			} else if (parsingANumber) {
-				if (!isStrictNumber(c)) {			// end of number reached
-					state = lookingForCommaOrEnd;
-					parsingANumber = false;
-					if (state === lookingForCommaOrEnd) {
-						if (c === '}' || c === ']') {
-							state = lookingForCommaOrEnd;
-							ret = ret.substr(0, ret.length - 1);
-							i--;					// repeat
-						}
-					}
-				}
 			} else if (c === ',') {
-				if (DEBUG) { console.log('detected missing quote 4'); }
-				ret = ret.substr(0, ret.length - 1) + '"';
-				state = lookingForCommaOrEnd;
-				i--;								// repeat
+				if (parsingANumber) {
+					parsingANumber = false;
+					if (get_parsing() === ARRAY) {
+						state = lookingForValueStart;
+					} else {
+						state = lookingForKeyStart;
+					}
+				} else {
+					if (DEBUG) { console.log('detected missing quote 4'); }
+					ret = ret.substr(0, ret.length - 1) + '"';
+					state = lookingForCommaOrEnd;
+					i--;								// repeat
+				}
 			} else if (c === '}') {
-				if (DEBUG) { console.log('detected missing quote 5'); }
-				ret = ret.substr(0, ret.length - 1) + '"';
-				state = lookingForCommaOrEnd;
-				i--;								// repeat
+				if (parsingANumber) {
+					parsingANumber = false;
+					state = lookingForCommaOrEnd;
+					ret = ret.substr(0, ret.length - 1);
+					i--;								// repeat, to detect the end
+				} else {
+					if (DEBUG) { console.log('detected missing quote 5'); }
+					ret = ret.substr(0, ret.length - 1) + '"';
+					state = lookingForCommaOrEnd;
+					i--;								// repeat
+				}
 			}
 		}
 
