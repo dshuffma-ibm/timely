@@ -139,16 +139,19 @@ let extra_bracket = `{
 		ting"]
 	},
 }`;
+let empty_str = '{"empty": ""}';
 let DEBUG = true;
 let test_cases = [
 	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2,
-	missing_quote3, missing_quote4, missing_bracket, missing_bracket2, missing_bracket3, missing_bracket4,
-	js_version, array_missing_comma, array_extra_comma, array_extra_comma2, array_extra_comma3,
-	obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2, extra_quote3, nested_obj_mixed2,
-	single_quotes, smaller_test, big_test, line_break_mid_value, extra_bracket
-	//missing_bracket
+	missing_quote3, missing_quote4, missing_bracket, missing_bracket2, missing_bracket3,
+	missing_bracket4, js_version, array_missing_comma, array_extra_comma, array_extra_comma2,
+	array_extra_comma3, obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2,
+	extra_quote3, nested_obj_mixed2, single_quotes, smaller_test, big_test,
+	line_break_mid_value, extra_bracket, empty_str
+	//nested_obj_mixed2
 ];
 let results = [];
+let pass = true;
 for (let i in test_cases) {
 	let fixed = fixIt(test_cases[i]);
 	console.log('final:\n', fixed);
@@ -157,9 +160,14 @@ for (let i in test_cases) {
 		results.push('success');
 	} catch (e) {
 		results.push('error');
+		pass = false;
 	}
 }
-console.log('\n\n\n', results);
+console.log('\n\n\n');
+for (let i in results) {
+	console.log((Number(i) + 1), results[i]);
+}
+console.log(pass ? 'good :)' : 'bad :(');
 
 // fix the JSON - or die in the fire of your own making
 function fixIt(str, iter) {
@@ -204,7 +212,9 @@ function fixIt(str, iter) {
 
 		const state_str = symbol2str(state);
 		const parsing_str = symbol2str(get_parsing());
-		if (DEBUG) { console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str); }
+		if (DEBUG) {
+			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str, openCurlyBrackets);
+		}
 
 		if (c === '\\') {
 			escaped_character = true;
@@ -258,6 +268,8 @@ function fixIt(str, iter) {
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForKeyStart;
 				}
+			} else if (c === '{') {
+				openCurlyBrackets++;
 			}
 		}
 
@@ -377,7 +389,7 @@ function fixIt(str, iter) {
 				openCurlyBrackets--;
 				parsing_history.pop();
 				if (openCurlyBrackets < 0) {
-					if (DEBUG) { console.log('unexpected bracket, must be extra bracket'); }
+					if (DEBUG) { console.log('unexpected bracket, must be extra bracket 1'); }
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForCommaOrEnd;
 				}
@@ -404,6 +416,8 @@ function fixIt(str, iter) {
 					ret = ret.substr(0, ret.length - 1) + ',';
 					state = lookingForBracket;
 					i--;								// repeat
+				} else {
+					openCurlyBrackets++;
 				}
 			}
 		}
