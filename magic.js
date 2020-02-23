@@ -144,6 +144,7 @@ let arr_numbers = '[123]';
 let arr_numbers2 = '[123, "test"]';
 let arr_numbers3 = '[123, 456, 2]';
 let arr_numbers4 = '[123, 456, {"hi : "there"}]';
+// -------------------------------------------------------------------------------------------------------------------------
 let DEBUG = true;
 let test_cases = [
 	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2,
@@ -159,20 +160,22 @@ let results = [];
 let pass = true;
 for (let i in test_cases) {
 	let fixed = fixIt(test_cases[i]);
-	console.log('final:\n', fixed);
+	if (DEBUG) { console.log('final:\n', fixed); }
 	try {
-		console.log('formatted:\n', JSON.stringify(JSON.parse(fixed), null, 2));
+		if (DEBUG) { console.log('formatted:\n', JSON.stringify(JSON.parse(fixed), null, 2)); }
 		results.push('success');
 	} catch (e) {
 		results.push('error');
 		pass = false;
 	}
 }
-console.log('\n\n\n');
+console.log('\n');
 for (let i in results) {
 	console.log((Number(i) + 1), results[i]);
 }
 console.log(pass ? 'good :)' : 'bad :(');
+
+// -------------------------------------------------------------------------------------------------------------------------
 
 // fix the JSON - or die in the fire of your own making
 function fixIt(str, iter) {
@@ -186,27 +189,28 @@ function fixIt(str, iter) {
 	const ARRAY = Symbol('array');
 	const OBJECT = Symbol('object');
 	let prev_char = null;
-
-	console.log('-----------------');
 	let state = lookingForBracket;
 	let parsingANumber = false;
 	let posLastColon = null;
 	let openCurlyBrackets = 0;
 	const parsing_history = [];
 	let escaped_character = false;
+	let ret = '';
+
 	if (iter === undefined) { iter = 0; }
 	else { iter++; }
 
-	// replace(/(\w+)\s*:/g, '"$1":')
-	str = str.replace(/""/g, '"').replace(/'([^'"]*)'/g, '"$1"').replace(/[\n\t]/g, '').trim();
-	let ret = '';
-
+	// watch dog
 	if (iter >= 10) {
 		console.error('iter limit exceeded, unable to parse');
 		return str;
 	}
 
+	if (DEBUG) { console.log('-----------------'); }
+	str = str.replace(/""/g, '"').replace(/'([^'"]*)'/g, '"$1"').replace(/[\n\t]/g, '').trim();
 	if (DEBUG) { console.log('\nStart', str); }
+
+	// iter on each character in the input
 	for (let i = 0; i < str.length; i++) {
 		let c = str[i];
 		ret += c;										// optimistically this character is good to go
@@ -217,11 +221,11 @@ function fixIt(str, iter) {
 			escaped_character = true;
 			continue;
 		}
-		prev_char = ret[ret.length - 2];
+		prev_char = ret.length >= 2 ? ret[ret.length - 2] : null;
 
-		const state_str = symbol2str(state);
-		const parsing_str = symbol2str(get_parsing());
 		if (DEBUG) {
+			const state_str = symbol2str(state);
+			const parsing_str = symbol2str(get_parsing());
 			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str, openCurlyBrackets);
 		}
 
@@ -430,11 +434,11 @@ function fixIt(str, iter) {
 		}
 
 		if (c !== '\\') {
-			escaped_character = false;
+			escaped_character = false;					// keep this flag last, only reset it after we handle the escaped char
 		}
 	}
 
-	if (openCurlyBrackets === 0) {						// if at the end..
+	if (openCurlyBrackets === 0) {						// if at the end and the brackets match, return what we have
 		return ret;
 	} else {
 		if (DEBUG) { console.log('detected missing bracket 3'); }	// this is not the proper exit, if we made it here, missing closing curly bracket
@@ -442,28 +446,32 @@ function fixIt(str, iter) {
 		return ret;
 	}
 
+	// return the current parsing symbol
 	function get_parsing() {
 		return parsing_history.length > 0 ? parsing_history[parsing_history.length - 1] : null;
 	}
-}
 
-function isStrictNumber(char) {
-	let numbers = '0123456789';
-	return numbers.includes(char);
-}
+	// detect a valid numeric character
+	function isStrictNumber(char) {
+		let numbers = '0123456789';
+		return numbers.includes(char);
+	}
 
-function isValueCharacter(char) {
-	let letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+;:?.><=-`~';
-	return letters.includes(char);
-}
+	// detect a valid character for a key's value
+	function isValueCharacter(char) {
+		let letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+;:?.><=-`~';
+		return letters.includes(char);
+	}
 
-function symbol2str(sym) {
-	if (sym) {
-		let sym_str = sym.toString();
-		sym_str = sym_str.substr(7);
-		sym_str = sym_str.substring(0, sym_str.length - 1);
-		return sym_str;
-	} else {
-		return null;
+	// return string from symbol's name
+	function symbol2str(sym) {
+		if (sym) {
+			let sym_str = sym.toString();
+			sym_str = sym_str.substr(7);
+			sym_str = sym_str.substring(0, sym_str.length - 1);
+			return sym_str;
+		} else {
+			return null;
+		}
 	}
 }
