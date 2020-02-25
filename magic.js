@@ -87,6 +87,7 @@ let extra_quote3 = `{
 	"hey": "there""
 	"hi": 123
 }`;
+let extra_quote4 = '{"hey": "there","}';
 let nested_obj_mixed2 = `{
 	"hey": {
 		"boo": [
@@ -150,7 +151,32 @@ let extra_bracket3 = '[[123]';
 let extra_bracket4 = '[123]]';
 let extra_bracket5 = '[[[[[123]]';
 let extra_bracket6 = '{"asd": [[[123], "ad": "test"}';
-//let extra_colon = '{asdf::"test"}';
+let extra_colon1 = '{asd::"test"}';
+let extra_colon2 = `{
+	a: {
+		b: 1,
+		c: [0,1,2,3,],
+		david:: 'this',
+		e: {}
+	},
+}`;
+let extra_colon3 = `{
+	"a": {
+		"b": 1:,
+		"david": 'this',
+		"e": {}
+	},
+}`;
+let missing_quotes1 = `{
+	"a": {
+		d:,
+		"asd": '123',
+		"e": {}
+	},
+}`;
+let missing_quotes2 = `{
+	"a": {d:,"asd": '123',"e": {}},
+}`;
 
 // -------------------------------------------------------------------------------------------------------------------------
 let test_cases = [
@@ -161,9 +187,10 @@ let test_cases = [
 	extra_quote3, nested_obj_mixed2, single_quotes, smaller_test, big_test,								// 25
 	line_break_mid_value, extra_bracket, empty_str, arr_numbers, arr_numbers2,							// 30
 	arr_numbers3, arr_numbers4, extra_bracket1, extra_bracket2, extra_bracket3,							// 35
-	extra_bracket4, extra_bracket5, extra_bracket6
+	extra_bracket4, extra_bracket5, extra_bracket6, extra_colon1, extra_colon2,							// 40
+	extra_colon3, missing_quotes1, missing_quotes2, extra_quote4
 ];
-//test_cases = [extra_colon];
+//test_cases = [empty_str];
 let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
@@ -218,7 +245,11 @@ function fixIt(str, iter) {
 	}
 
 	if (DEBUG) { console.log('-----------------'); }
-	str = str.replace(/""/g, '"').replace(/'([^'"]*)'/g, '"$1"').replace(/{{/g, '{').replace(/[\n\t]/g, '').trim();
+	// 1 replace single quotes with double
+	// 2 replace 2 curly brackets with 1
+	// 3 remove bad sequence of ,"}
+	// 4 remove new lines and tabs
+	str = str.replace(/'([^'"]*)'/g, '"$1"').replace(/{{/g, '{').replace(/,"}/g, '').replace(/[\n\t]/g, '').trim();
 	if (DEBUG) { console.log('\nStart', str); }
 
 	// iter on each character in the input
@@ -239,6 +270,7 @@ function fixIt(str, iter) {
 			const parsing_str = symbol2str(get_parsing());
 			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str,
 				openCurlyBrackets + '/' + openSqrBrackets);
+			console.log('  ', ret);
 		}
 
 		// [lookingForBracket]
@@ -347,15 +379,23 @@ function fixIt(str, iter) {
 				parsing_history.push(ARRAY);
 				state = lookingForKeyStart;
 				openSqrBrackets++;
-			} else if (isValueCharacter(c) || c === '\'') {
-				if (DEBUG) { console.log('detected missing quote 3'); }
-				ret = ret.substr(0, ret.length - 1) + '"';
-				state = lookingForKeyEnd;
-				i--;									// repeat
 			} else if (c === ']') {
 				if (DEBUG) { console.log('unexpected bracket, must be extra comma 4'); }
 				ret = ret.substr(0, ret.length - 2);
 				state = lookingForCommaOrEnd;
+				i--;									// repeat
+			} else if (c === ':') {
+				if (DEBUG) { console.log('detected extra colon 1'); }
+				ret = ret.substr(0, ret.length - 1);
+				state = lookingForValueStart;
+			} else if (c === ',') {
+				if (DEBUG) { console.log('detected missing quotes 1'); }
+				ret = ret.substr(0, ret.length - 1) + '""';
+				state = lookingForCommaOrEnd;
+			} else if (isValueCharacter(c) || c === '\'') {
+				if (DEBUG) { console.log('detected missing quote 3'); }
+				ret = ret.substr(0, ret.length - 1) + '"';
+				state = lookingForKeyEnd;
 				i--;									// repeat
 			}
 		}
@@ -401,6 +441,10 @@ function fixIt(str, iter) {
 				parsing_history.pop();
 				state = lookingForCommaOrEnd;
 				posLastSqrCloseBracket = ret.length - 1;
+			} else if (c === ':') {
+				if (DEBUG) { console.log('detected extra colon 2'); }
+				ret = ret.substr(0, ret.length - 1);
+				state = lookingForValueEnd;
 			}
 		}
 
