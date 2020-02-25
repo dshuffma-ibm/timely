@@ -182,6 +182,9 @@ let escape_char1 = '{"hey": "hey \'kid\'"}';
 let single_quotes2 = '{\'hey\': \'hey\'}';
 let escape_char2 = '{"hey": "hey kid\'s"}';
 let duration1 = '{"hey": 10s}';
+let duration2 = `{
+	"a": {"david":   10h3,},
+}`;
 
 // -------------------------------------------------------------------------------------------------------------------------
 let test_cases = [
@@ -194,9 +197,9 @@ let test_cases = [
 	arr_numbers3, arr_numbers4, extra_bracket1, extra_bracket2, extra_bracket3,							// 35
 	extra_bracket4, extra_bracket5, extra_bracket6, extra_colon1, extra_colon2,							// 40
 	extra_colon3, missing_quotes1, missing_quotes2, extra_quote4, extra_quote5,							// 45
-	escape_char1, single_quotes2, escape_char2, duration1
+	escape_char1, single_quotes2, escape_char2, duration1, duration2,									// 50
 ];
-test_cases = [duration1];
+//test_cases = [extra_bracket6];
 let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
@@ -220,7 +223,7 @@ console.log(pass ? 'good :)' : 'bad :(');
 // -------------------------------------------------------------------------------------------------------------------------
 
 // fix the JSON - or die in the fire of your own making
-function fixIt(str, iter) {
+function fixIt(str) {
 	const lookingForBracket = Symbol('lookingForBracket');
 	const lookingForKeyStart = Symbol('lookingForKeyStart');
 	const lookingForKeyEnd = Symbol('lookingForKeyEnd');
@@ -240,15 +243,7 @@ function fixIt(str, iter) {
 	let openSqrBrackets = 0;
 	const parsing_history = [];
 	let ret = '';
-
-	if (iter === undefined) { iter = 0; }
-	else { iter++; }
-
-	// watch dog
-	if (iter >= 10) {
-		console.error('iter limit exceeded, unable to parse');
-		return str;
-	}
+	let max_iterations = str.length * 5;
 
 	if (DEBUG) { console.log('-----------------'); }
 	// 1 replace single quote values with double
@@ -263,9 +258,16 @@ function fixIt(str, iter) {
 	// iter on each character in the input
 	for (let i = 0; i < str.length; i++) {
 		let c = str[i];
+		max_iterations--;
 		ret += c;										// optimistically this character is good to go
 		if (c === ' ' || c === '\n' || c === '\t') {
 			continue;
+		}
+
+		// watch dog
+		if (max_iterations <= 0) {
+			console.error('iter limit exceeded, unable to parse', str);
+			return str;
 		}
 
 		prev_char = ret.length >= 2 ? ret[ret.length - 2] : null;
@@ -273,7 +275,7 @@ function fixIt(str, iter) {
 		if (DEBUG) {
 			const state_str = symbol2str(state);
 			const parsing_str = symbol2str(get_parsing());
-			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str,
+			console.log('[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str,
 				openCurlyBrackets + '/' + openSqrBrackets);
 		}
 
@@ -458,6 +460,10 @@ function fixIt(str, iter) {
 				state = lookingForValueEnd;
 				i = posNumberStart - 1;								// repeat, start over at the quote
 			}
+
+			if (!isStrictNumber(c)) {								// if we find even 1 non-number we are not parsing a number
+				parsingANumber = false;
+			}
 		}
 
 		// [lookingForCommaOrEnd]
@@ -493,11 +499,13 @@ function fixIt(str, iter) {
 				// this fix is a guess... the error is detected way after it happened
 				if (DEBUG) { console.log('detected missing bracket in past'); }
 				if (get_parsing() === OBJECT) {
-					ret = str.substring(0, posLastColon + 1) + '{' + str.substring(posLastColon + 1);
-					return fixIt(ret, iter);				// I don't know what state we were in at this position, so repeat...
+					ret = str.substring(0, posLastColon + 1) + '{';			// i know this state b/c {{ is impossible
+					state = lookingForKeyStart;
+					i = posLastColon;
+					openCurlyBrackets++;
 				} else {
 					ret = str.substring(0, posLastSqrCloseBracket + 1) + ']' + str.substring(posLastSqrCloseBracket + 1);
-					return fixIt(ret, iter);				// I don't know what state we were in at this position, so repeat...
+					return fixIt(ret);				// I don't know what state we were in at this position, so repeat...
 				}
 			} else if (c === ']') {
 				openSqrBrackets--;
