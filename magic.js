@@ -144,18 +144,27 @@ let arr_numbers = '[123]';
 let arr_numbers2 = '[123, "test"]';
 let arr_numbers3 = '[123, 456, 2]';
 let arr_numbers4 = '[123, 456, {"hi : "there"}]';
+let extra_bracket1 = '{{"hey": "there", "hi": 123}';
+let extra_bracket2 = '{"hey": "there", "hi": 123}}';
+let extra_bracket3 = '[[123]';
+let extra_bracket4 = '[123]]';
+let extra_bracket5 = '[[[[[123]]';
+let extra_bracket6 = '{"asd": [[[123], "ad": "test"}';
+//let extra_colon = '{asdf::"test"}';
+
 // -------------------------------------------------------------------------------------------------------------------------
-let DEBUG = true;
 let test_cases = [
-	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2,
-	missing_quote3, missing_quote4, missing_bracket, missing_bracket2, missing_bracket3,
-	missing_bracket4, js_version, array_missing_comma, array_extra_comma, array_extra_comma2,
-	array_extra_comma3, obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2,
-	extra_quote3, nested_obj_mixed2, single_quotes, smaller_test, big_test,
-	line_break_mid_value, extra_bracket, empty_str, arr_numbers, arr_numbers2,
-	arr_numbers3, arr_numbers4
+	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2, 	// 5
+	missing_quote3, missing_quote4, missing_bracket, missing_bracket2, missing_bracket3,				// 10
+	missing_bracket4, js_version, array_missing_comma, array_extra_comma, array_extra_comma2,			// 15
+	array_extra_comma3, obj_extra_comma, nested_obj_mixed, extra_quote, extra_quote2,					// 20
+	extra_quote3, nested_obj_mixed2, single_quotes, smaller_test, big_test,								// 25
+	line_break_mid_value, extra_bracket, empty_str, arr_numbers, arr_numbers2,							// 30
+	arr_numbers3, arr_numbers4, extra_bracket1, extra_bracket2, extra_bracket3,							// 35
+	extra_bracket4, extra_bracket5, extra_bracket6
 ];
-//test_cases = [missing_bracket3];
+//test_cases = [extra_colon];
+let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
 for (let i in test_cases) {
@@ -192,7 +201,9 @@ function fixIt(str, iter) {
 	let state = lookingForBracket;
 	let parsingANumber = false;
 	let posLastColon = null;
+	let posLastSqrCloseBracket = null;
 	let openCurlyBrackets = 0;
+	let openSqrBrackets = 0;
 	const parsing_history = [];
 	let escaped_character = false;
 	let ret = '';
@@ -207,7 +218,7 @@ function fixIt(str, iter) {
 	}
 
 	if (DEBUG) { console.log('-----------------'); }
-	str = str.replace(/""/g, '"').replace(/'([^'"]*)'/g, '"$1"').replace(/[\n\t]/g, '').trim();
+	str = str.replace(/""/g, '"').replace(/'([^'"]*)'/g, '"$1"').replace(/{{/g, '{').replace(/[\n\t]/g, '').trim();
 	if (DEBUG) { console.log('\nStart', str); }
 
 	// iter on each character in the input
@@ -226,13 +237,15 @@ function fixIt(str, iter) {
 		if (DEBUG) {
 			const state_str = symbol2str(state);
 			const parsing_str = symbol2str(get_parsing());
-			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str, openCurlyBrackets);
+			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str,
+				openCurlyBrackets + '/' + openSqrBrackets);
 		}
 
 		// [lookingForBracket]
 		if (state === lookingForBracket) {
 			if (c === '{' || c === '[') {
 				if (c === '[') {
+					openSqrBrackets++;
 					parsing_history.push(ARRAY);
 				} else {
 					openCurlyBrackets++;
@@ -277,10 +290,16 @@ function fixIt(str, iter) {
 					state = lookingForKeyStart;
 				}
 			} else if (c === '{') {
+				parsing_history.push(OBJECT);
 				openCurlyBrackets++;
+				state = lookingForKeyStart;
+			} else if (c === '[') {
+				parsing_history.push(ARRAY);
+				openSqrBrackets++;
+				state = lookingForKeyStart;
 			} else if (isStrictNumber(c)) {				// its a number
-				state = lookingForValueEnd;
 				parsingANumber = true;
+				state = lookingForValueEnd;
 			}
 		}
 
@@ -315,20 +334,19 @@ function fixIt(str, iter) {
 
 		// [lookingForValueStart]
 		else if (state === lookingForValueStart) {
-			if (c === '[') {
-				parsing_history.push(ARRAY);
-			} else if (c === '{') {
-				parsing_history.push(OBJECT);
-			}
-
 			if (c === '"') {
 				state = lookingForValueEnd;
 			} else if (isStrictNumber(c)) {				// its a number
 				state = lookingForValueEnd;
 				parsingANumber = true;
 			} else if (c === '{') {						// its an object
+				parsing_history.push(OBJECT);
 				state = lookingForKeyStart;
 				openCurlyBrackets++;
+			} else if (c === '[') {						// its an array
+				parsing_history.push(ARRAY);
+				state = lookingForKeyStart;
+				openSqrBrackets++;
 			} else if (isValueCharacter(c) || c === '\'') {
 				if (DEBUG) { console.log('detected missing quote 3'); }
 				ret = ret.substr(0, ret.length - 1) + '"';
@@ -378,6 +396,11 @@ function fixIt(str, iter) {
 					state = lookingForCommaOrEnd;
 					i--;								// repeat
 				}
+			} else if (c === ']') {
+				openSqrBrackets--;
+				parsing_history.pop();
+				state = lookingForCommaOrEnd;
+				posLastSqrCloseBracket = ret.length - 1;
 			}
 		}
 
@@ -403,24 +426,38 @@ function fixIt(str, iter) {
 					if (DEBUG) { console.log('unexpected bracket, must be extra bracket 1'); }
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForCommaOrEnd;
+					openCurlyBrackets = 0;
 				}
-				if (i === str.length - 1) {				// if at the end..
-					for (; openCurlyBrackets > 0; openCurlyBrackets--) {
-						if (DEBUG) { console.log('detected missing bracket 4'); }
-						ret += '}';
-					}
-					if (DEBUG) { console.log('all done 1'); }
+				if (i === str.length - 1) {				// if at the end...
+					balance_brackets();
+					if (DEBUG) { console.log('all done 1', openCurlyBrackets + '/' + openSqrBrackets); }
 					return ret;
 				}
 			} else if (c === ':') {
 				// this fix is a guess... the error is detected way after it happened
 				if (DEBUG) { console.log('detected missing bracket in past'); }
-				ret = str.substring(0, posLastColon + 1) + '{' + str.substring(posLastColon + 1);
-				state = lookingForKeyStart;
-				return fixIt(ret, iter);				// repeat...
+				if (get_parsing() === OBJECT) {
+					ret = str.substring(0, posLastColon + 1) + '{' + str.substring(posLastColon + 1);
+					return fixIt(ret, iter);				// I don't know what state we were in at this position, so repeat...
+				} else {
+					ret = str.substring(0, posLastSqrCloseBracket + 1) + ']' + str.substring(posLastSqrCloseBracket + 1);
+					return fixIt(ret, iter);				// I don't know what state we were in at this position, so repeat...
+				}
 			} else if (c === ']') {
+				openSqrBrackets--;
 				parsing_history.pop();
-				state = lookingForCommaOrEnd;
+				posLastSqrCloseBracket = ret.length - 1;
+				if (openSqrBrackets < 0) {
+					if (DEBUG) { console.log('unexpected bracket, must be extra bracket 2'); }
+					ret = ret.substr(0, ret.length - 1);
+					state = lookingForCommaOrEnd;
+					openSqrBrackets = 0;
+				}
+				if (i === str.length - 1) {				// if at the end..
+					balance_brackets();
+					if (DEBUG) { console.log('all done 2', openCurlyBrackets + '/' + openSqrBrackets); }
+					return ret;
+				}
 			} else if (c === '{') {
 				if (get_parsing() === ARRAY) {
 					if (DEBUG) { console.log('detected missing comma 3'); }
@@ -438,12 +475,19 @@ function fixIt(str, iter) {
 		}
 	}
 
-	if (openCurlyBrackets === 0) {						// if at the end and the brackets match, return what we have
-		return ret;
-	} else {
-		if (DEBUG) { console.log('detected missing bracket 3'); }	// this is not the proper exit, if we made it here, missing closing curly bracket
-		ret += '}';
-		return ret;
+	balance_brackets();									// this is not the proper exit, if we made it here, missing closing curly bracket
+	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets); }
+	return ret;
+
+	function balance_brackets() {
+		for (; openSqrBrackets > 0; openSqrBrackets--) {
+			if (DEBUG) { console.log('detected missing bracket 2'); }
+			ret += ']';
+		}
+		for (; openCurlyBrackets > 0; openCurlyBrackets--) {
+			if (DEBUG) { console.log('detected missing bracket 3'); }
+			ret += '}';
+		}
 	}
 
 	// return the current parsing symbol
