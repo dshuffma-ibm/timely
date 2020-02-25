@@ -181,7 +181,7 @@ let missing_quotes2 = `{
 let escape_char1 = '{"hey": "hey \'kid\'"}';
 let single_quotes2 = '{\'hey\': \'hey\'}';
 let escape_char2 = '{"hey": "hey kid\'s"}';
-let duration = '{"hey": 10s}';
+let duration1 = '{"hey": 10s}';
 
 // -------------------------------------------------------------------------------------------------------------------------
 let test_cases = [
@@ -194,9 +194,9 @@ let test_cases = [
 	arr_numbers3, arr_numbers4, extra_bracket1, extra_bracket2, extra_bracket3,							// 35
 	extra_bracket4, extra_bracket5, extra_bracket6, extra_colon1, extra_colon2,							// 40
 	extra_colon3, missing_quotes1, missing_quotes2, extra_quote4, extra_quote5,							// 45
-	escape_char1, single_quotes2, escape_char2
+	escape_char1, single_quotes2, escape_char2, duration1
 ];
-//test_cases = [duration];
+test_cases = [duration1];
 let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
@@ -235,6 +235,7 @@ function fixIt(str, iter) {
 	let parsingANumber = false;
 	let posLastColon = null;
 	let posLastSqrCloseBracket = null;
+	let posNumberStart = null;
 	let openCurlyBrackets = 0;
 	let openSqrBrackets = 0;
 	const parsing_history = [];
@@ -335,6 +336,7 @@ function fixIt(str, iter) {
 			} else if (isStrictNumber(c)) {				// its a number
 				parsingANumber = true;
 				state = lookingForValueEnd;
+				posNumberStart = ret.length - 1;
 			}
 		}
 
@@ -374,6 +376,7 @@ function fixIt(str, iter) {
 			} else if (isStrictNumber(c)) {				// its a number
 				state = lookingForValueEnd;
 				parsingANumber = true;
+				posNumberStart = ret.length - 1;
 			} else if (c === '{') {						// its an object
 				parsing_history.push(OBJECT);
 				state = lookingForKeyStart;
@@ -448,6 +451,12 @@ function fixIt(str, iter) {
 				if (DEBUG) { console.log('detected extra colon 2'); }
 				ret = ret.substr(0, ret.length - 1);
 				state = lookingForValueEnd;
+			} else if (parsingANumber && !isStrictNumber(c)) {		// its aaa was a number
+				if (DEBUG) { console.log('detected missing quotes on string in past', i, posNumberStart); }
+				parsingANumber = false;
+				ret = str.substring(0, posNumberStart) + '"';
+				state = lookingForValueEnd;
+				i = posNumberStart - 1;								// repeat, start over at the quote
 			}
 		}
 
