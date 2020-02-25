@@ -88,6 +88,7 @@ let extra_quote3 = `{
 	"hi": 123
 }`;
 let extra_quote4 = '{"hey": "there","}';
+let extra_quote5 = '{"hey": "there,"}';
 let nested_obj_mixed2 = `{
 	"hey": {
 		"boo": [
@@ -177,6 +178,10 @@ let missing_quotes1 = `{
 let missing_quotes2 = `{
 	"a": {d:,"asd": '123',"e": {}},
 }`;
+let escape_char1 = '{"hey": "hey \'kid\'"}';
+let single_quotes2 = '{\'hey\': \'hey\'}';
+let escape_char2 = '{"hey": "hey kid\'s"}';
+let duration = '{"hey": 10s}';
 
 // -------------------------------------------------------------------------------------------------------------------------
 let test_cases = [
@@ -188,9 +193,10 @@ let test_cases = [
 	line_break_mid_value, extra_bracket, empty_str, arr_numbers, arr_numbers2,							// 30
 	arr_numbers3, arr_numbers4, extra_bracket1, extra_bracket2, extra_bracket3,							// 35
 	extra_bracket4, extra_bracket5, extra_bracket6, extra_colon1, extra_colon2,							// 40
-	extra_colon3, missing_quotes1, missing_quotes2, extra_quote4
+	extra_colon3, missing_quotes1, missing_quotes2, extra_quote4, extra_quote5,							// 45
+	escape_char1, single_quotes2, escape_char2
 ];
-//test_cases = [empty_str];
+//test_cases = [duration];
 let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
@@ -232,7 +238,6 @@ function fixIt(str, iter) {
 	let openCurlyBrackets = 0;
 	let openSqrBrackets = 0;
 	const parsing_history = [];
-	let escaped_character = false;
 	let ret = '';
 
 	if (iter === undefined) { iter = 0; }
@@ -245,11 +250,13 @@ function fixIt(str, iter) {
 	}
 
 	if (DEBUG) { console.log('-----------------'); }
-	// 1 replace single quotes with double
-	// 2 replace 2 curly brackets with 1
-	// 3 remove bad sequence of ,"}
-	// 4 remove new lines and tabs
-	str = str.replace(/'([^'"]*)'/g, '"$1"').replace(/{{/g, '{').replace(/,"}/g, '').replace(/[\n\t]/g, '').trim();
+	// 1 replace single quote values with double
+	// 2 replace single quote keys with double
+	// 3 replace 2 curly brackets with 1
+	// 4 remove bad sequence of ,"}
+	// 5 remove new lines and tabs
+	str = str.replace(/:\s*'([^'"]*)'/g, ':"$1"').replace(/'([^'"]*)'\s*:/g, '"$1":');
+	str = str.replace(/{{/g, '{').replace(/"([^"]*),"}/g, '"$1"').replace(/[\n\t]/g, '').trim();
 	if (DEBUG) { console.log('\nStart', str); }
 
 	// iter on each character in the input
@@ -259,10 +266,7 @@ function fixIt(str, iter) {
 		if (c === ' ' || c === '\n' || c === '\t') {
 			continue;
 		}
-		if (c === '\\') {
-			escaped_character = true;
-			continue;
-		}
+
 		prev_char = ret.length >= 2 ? ret[ret.length - 2] : null;
 
 		if (DEBUG) {
@@ -270,7 +274,6 @@ function fixIt(str, iter) {
 			const parsing_str = symbol2str(get_parsing());
 			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str,
 				openCurlyBrackets + '/' + openSqrBrackets);
-			console.log('  ', ret);
 		}
 
 		// [lookingForBracket]
@@ -402,7 +405,7 @@ function fixIt(str, iter) {
 
 		// [lookingForValueEnd]
 		else if (state === lookingForValueEnd) {
-			if (c === '"' && escaped_character === false) {
+			if (c === '"') {
 				if (prev_char === '"') {
 					if (DEBUG) { console.log('detected extra quote 1'); }
 					ret = ret.substr(0, ret.length - 1);
@@ -512,10 +515,6 @@ function fixIt(str, iter) {
 					openCurlyBrackets++;
 				}
 			}
-		}
-
-		if (c !== '\\') {
-			escaped_character = false;					// keep this flag last, only reset it after we handle the escaped char
 		}
 	}
 
