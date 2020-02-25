@@ -204,7 +204,7 @@ let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
 for (let i in test_cases) {
-	let fixed = fixIt(test_cases[i]);
+	let fixed = fixIt(test_cases[i], 0, test_cases[i].length * 8);
 	if (DEBUG) { console.log('final:\n', fixed); }
 	try {
 		if (DEBUG) { console.log('formatted:\n', JSON.stringify(JSON.parse(fixed), null, 2)); }
@@ -223,7 +223,7 @@ console.log(pass ? 'good :)' : 'bad :(');
 // -------------------------------------------------------------------------------------------------------------------------
 
 // fix the JSON - or die in the fire of your own making
-function fixIt(str) {
+function fixIt(str, iter, maxIter) {
 	const lookingForBracket = Symbol('lookingForBracket');
 	const lookingForKeyStart = Symbol('lookingForKeyStart');
 	const lookingForKeyEnd = Symbol('lookingForKeyEnd');
@@ -243,7 +243,6 @@ function fixIt(str) {
 	let openSqrBrackets = 0;
 	const parsing_history = [];
 	let ret = '';
-	let max_iterations = str.length * 5;
 
 	if (DEBUG) { console.log('-----------------'); }
 	// 1 replace single quote values with double
@@ -253,19 +252,19 @@ function fixIt(str) {
 	// 5 remove new lines and tabs
 	str = str.replace(/:\s*'([^'"]*)'/g, ':"$1"').replace(/'([^'"]*)'\s*:/g, '"$1":');
 	str = str.replace(/{{/g, '{').replace(/"([^"]*),"}/g, '"$1"').replace(/[\n\t]/g, '').trim();
-	if (DEBUG) { console.log('\nStart', str); }
+	if (DEBUG) { console.log('\nStart max', maxIter, str); }
 
 	// iter on each character in the input
 	for (let i = 0; i < str.length; i++) {
 		let c = str[i];
-		max_iterations--;
+		iter++;
 		ret += c;										// optimistically this character is good to go
 		if (c === ' ' || c === '\n' || c === '\t') {
 			continue;
 		}
 
 		// watch dog
-		if (max_iterations <= 0) {
+		if (iter > maxIter) {
 			console.error('iter limit exceeded, unable to parse', str);
 			return str;
 		}
@@ -275,7 +274,7 @@ function fixIt(str) {
 		if (DEBUG) {
 			const state_str = symbol2str(state);
 			const parsing_str = symbol2str(get_parsing());
-			console.log('[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str,
+			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str,
 				openCurlyBrackets + '/' + openSqrBrackets);
 		}
 
@@ -505,7 +504,7 @@ function fixIt(str) {
 					openCurlyBrackets++;
 				} else {
 					ret = str.substring(0, posLastSqrCloseBracket + 1) + ']' + str.substring(posLastSqrCloseBracket + 1);
-					return fixIt(ret);				// I don't know what state we were in at this position, so repeat...
+					return fixIt(ret, iter, maxIter);				// I don't know what state we were in at this position, so repeat...
 				}
 			} else if (c === ']') {
 				openSqrBrackets--;
