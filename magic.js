@@ -129,8 +129,8 @@ let smaller_test = `{
 	},
 }`;
 let line_break_mid_value = `{
-	"line": "break-
-	here",
+	"line": "break-\t\nhere",
+	"escaped": "tab\\tstuff",
 	a: ["tes
 		ting"]
 }`;
@@ -185,7 +185,29 @@ let duration1 = '{"hey": 10s}';
 let duration2 = `{
 	"a": {"david":   10h3,},
 }`;
-
+let deep = `{
+	"last_update": {
+		"payload": {
+			"data": {
+				"write_set": {
+					"groups": {
+						"Orderer": {
+							"groups": {},
+							"mod_policy": "",
+							"policies": {},
+							"values": {},
+							"version": "0"
+						}
+					},
+					"mod_policy": "",
+					"policies": {},
+					"values": {},
+					"version": "0"
+				}
+			}
+		}
+	}
+}`;
 // -------------------------------------------------------------------------------------------------------------------------
 let test_cases = [
 	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2, 	// 5
@@ -198,8 +220,9 @@ let test_cases = [
 	extra_bracket4, extra_bracket5, extra_bracket6, extra_colon1, extra_colon2,							// 40
 	extra_colon3, missing_quotes1, missing_quotes2, extra_quote4, extra_quote5,							// 45
 	escape_char1, single_quotes2, escape_char2, duration1, duration2,									// 50
+	deep,
 ];
-//test_cases = [extra_bracket6];
+//test_cases = [escaped_brackets];
 let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
@@ -249,9 +272,8 @@ function fixIt(str, iter, maxIter) {
 	// 2 replace single quote keys with double
 	// 3 replace 2 curly brackets with 1
 	// 4 remove bad sequence of ,"}
-	// 5 remove new lines and tabs
 	str = str.replace(/:\s*'([^'"]*)'/g, ':"$1"').replace(/'([^'"]*)'\s*:/g, '"$1":');
-	str = str.replace(/{{/g, '{').replace(/"([^"]*),"}/g, '"$1"').replace(/[\n\t]/g, '').trim();
+	str = str.replace(/{{/g, '{').replace(/"([^"]*),"}/g, '"$1"').trim();
 	if (DEBUG) { console.log('\nStart max', maxIter, str); }
 
 	// iter on each character in the input
@@ -259,9 +281,7 @@ function fixIt(str, iter, maxIter) {
 		let c = str[i];
 		iter++;
 		ret += c;										// optimistically this character is good to go
-		if (c === ' ' || c === '\n' || c === '\t') {
-			continue;
-		}
+		prev_char = ret.length >= 2 ? ret[ret.length - 2] : null;
 
 		// watch dog
 		if (iter > maxIter) {
@@ -269,13 +289,18 @@ function fixIt(str, iter, maxIter) {
 			return str;
 		}
 
-		prev_char = ret.length >= 2 ? ret[ret.length - 2] : null;
-
 		if (DEBUG) {
 			const state_str = symbol2str(state);
 			const parsing_str = symbol2str(get_parsing());
 			console.log(iter, '[' + c + '] char:' + (i + 1) + '/' + str.length + ' state:' + state_str + ' parsing:' + parsing_str,
 				openCurlyBrackets + '/' + openSqrBrackets);
+		}
+
+		if (c === ' ') { continue; }						// spaces are meaningless, next
+		if (c === '\t' || c === '\n' || c === '\r') {		// tabs, newlines, cr are illegal, go figure, remove it
+			if (DEBUG) { console.log('unexpected whitespace', ((c === '\t') ? 'tab' : (c === '\n') ? 'newline' : 'carriage return')); }
+			ret = ret.substr(0, ret.length - 1);
+			continue;
 		}
 
 		// [lookingForBracket]
@@ -308,8 +333,9 @@ function fixIt(str, iter, maxIter) {
 				state = lookingForKeyEnd;
 				i--;									// repeat
 			} else if (c === ']' || c === '}') {
-				if (prev_char === '{') {
-					state = lookingForKeyStart;
+				if (c === '}' && prev_char === '{') {
+					state = lookingForCommaOrEnd;
+					openCurlyBrackets--;
 					// was an empty object, all is well
 				} else {
 					if (DEBUG) { console.log('unexpected bracket, must be extra comma 1'); }
@@ -399,7 +425,7 @@ function fixIt(str, iter, maxIter) {
 				if (DEBUG) { console.log('detected missing quotes 1'); }
 				ret = ret.substr(0, ret.length - 1) + '""';
 				state = lookingForCommaOrEnd;
-			} else if (isValueCharacter(c) || c === '\'') {
+			} else if (isValueCharacter(c)) {
 				if (DEBUG) { console.log('detected missing quote 3'); }
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForKeyEnd;
@@ -410,13 +436,7 @@ function fixIt(str, iter, maxIter) {
 		// [lookingForValueEnd]
 		else if (state === lookingForValueEnd) {
 			if (c === '"') {
-				if (prev_char === '"') {
-					if (DEBUG) { console.log('detected extra quote 1'); }
-					ret = ret.substr(0, ret.length - 1);
-					state = lookingForValueEnd;
-				} else {
-					state = lookingForCommaOrEnd;
-				}
+				state = lookingForCommaOrEnd;
 			} else if (c === ',') {
 				if (parsingANumber) {
 					parsingANumber = false;
@@ -562,8 +582,8 @@ function fixIt(str, iter, maxIter) {
 
 	// detect a valid character for a key's value
 	function isValueCharacter(char) {
-		let letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+;:?.><=-`~';
-		return letters.includes(char);
+		let invalid_characters = '[]{}":,';
+		return !invalid_characters.includes(char);
 	}
 
 	// return string from symbol's name
