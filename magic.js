@@ -208,6 +208,173 @@ let deep = `{
 		}
 	}
 }`;
+let huge = `{
+	"config": {
+		"channel_group": {
+			"groups": {
+				"Consortiums": {
+					"groups": {
+						"SampleConsortium": {
+							"groups": {
+								"PeerOrg1": {
+									"groups": {},
+									"mod_policy": "Admins",
+									"policies": {
+										"Admins": {
+											"mod_policy": "Admins",
+											"policy": {
+												"type": 1,
+												"value": {
+													"identities": [{
+														"principal": {
+															"msp_identifier": "PeerOrg1",
+															"role": "ADMIN"
+														},
+														"principal_classification": "ROLE"
+													}],
+													"rule": {
+														"n_out_of": {
+															"n": 1,
+															"rules": [{
+																"signed_by": 0
+															}]
+														}
+													},
+													"version": 0
+												}
+											},
+											"version": "0"
+										},
+										"Readers": {
+											"mod_policy": "Admins",
+											"policy": {
+												"type": 1,
+												"value": {
+													"identities": [{
+														"principal": {
+															"msp_identifier": "PeerOrg1",
+															"role": "MEMBER"
+														},
+														"principal_classification": "ROLE"
+													}],
+													"rule": {
+														"n_out_of": {
+															"n": 1,
+															"rules": [{
+																"signed_by": 0
+															}]
+														}
+													},
+													"version": 0
+												}
+											},
+											"version": "0"
+										},
+										"Writers": {
+											"mod_policy": "Admins",
+											"policy": {
+												"type": 1,
+												"value": {
+													"identities": [{
+														"principal": {
+															"msp_identifier": "PeerOrg1",
+															"role": "MEMBER"
+														},
+														"principal_classification": "ROLE"
+													}],
+													"rule": {
+														"n_out_of": {
+															"n": 1,
+															"rules": [{
+																"signed_by": 0
+															}]
+														}
+													},
+													"version": 0
+												}
+											},
+											"version": "0"
+										}
+									},
+									"values": {
+										"MSP": {
+											"mod_policy": "Admins",
+											"value": {
+												"config": {
+													"admins": [
+														"sadf"
+													],
+													"crypto_config": null,
+													"fabric_node_ous": null,
+													"intermediate_certs": [
+														"asdf=",
+														"sfsaf="
+													],
+													"name": "PeerOrg1",
+													"organizational_unit_identifiers": [],
+													"revocation_list": [],
+													"root_certs": [
+														"asdf="
+													],
+													"signing_identity": null,
+													"tls_intermediate_certs": [
+														"adsf",
+														"asdf"
+													],
+													"tls_root_certs": [
+														"dfs"
+													]
+												},
+												"type": 0
+											}
+										}
+									}
+								}
+							},
+							"mod_policy": "/Channel/Orderer/Admins",
+							"policies": {},
+							"values": {
+								"ChannelCreationPolicy": {
+									"mod_policy": "/Channel/Orderer/Admins",
+									"value": {
+										"type": 3,
+										"value": {
+											"rule": "ANY",
+											"sub_policy": "Admins"
+										}
+									},
+									"version": "0"
+								}
+							}
+						}
+					},
+					"mod_policy": "/Channel/Orderer/Admins",
+					"policies": {
+						"Admins": {
+							"mod_policy": "/Channel/Orderer/Admins",
+							"policy": {
+								"type": 1,
+								"value": {
+									"identities": [],
+									"rule": {
+										"n_out_of": {
+											"n": 0,
+											"rules": []
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}`;
+let null_test1 = '{"test": null, "arr": ["t", null, 5]}';
+let missing_colon = '{"test": null, "arr" ["t", 5]}';
+let extra_colon4 = '{"test": null, "arr" ["t", :5]}';
+
 // -------------------------------------------------------------------------------------------------------------------------
 let test_cases = [
 	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2, 	// 5
@@ -220,9 +387,9 @@ let test_cases = [
 	extra_bracket4, extra_bracket5, extra_bracket6, extra_colon1, extra_colon2,							// 40
 	extra_colon3, missing_quotes1, missing_quotes2, extra_quote4, extra_quote5,							// 45
 	escape_char1, single_quotes2, escape_char2, duration1, duration2,									// 50
-	deep,
+	deep, huge, null_test1, missing_colon, extra_colon4													// 55
 ];
-//test_cases = [escaped_brackets];
+//test_cases = [extra_colon];
 let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
@@ -266,6 +433,7 @@ function fixIt(str, iter, maxIter) {
 	let openSqrBrackets = 0;
 	const parsing_history = [];
 	let ret = '';
+	let issues = [];
 
 	if (DEBUG) { console.log('-----------------'); }
 	// 1 replace single quote values with double
@@ -280,7 +448,7 @@ function fixIt(str, iter, maxIter) {
 	for (let i = 0; i < str.length; i++) {
 		let c = str[i];
 		iter++;
-		ret += c;										// optimistically this character is good to go
+		ret += c;											// optimistically this character is good to go
 		prev_char = ret.length >= 2 ? ret[ret.length - 2] : null;
 
 		// watch dog
@@ -316,6 +484,7 @@ function fixIt(str, iter, maxIter) {
 				state = lookingForKeyStart;
 			} else {
 				if (DEBUG) { console.log('detected missing bracket 1'); }
+				issues.push([c, i, 1]);
 				ret = ret.substr(0, ret.length - 1) + '{';
 				state = lookingForKeyStart;
 				openCurlyBrackets++;
@@ -328,10 +497,18 @@ function fixIt(str, iter, maxIter) {
 			if (c === '"') {							// its a string
 				state = lookingForKeyEnd;
 			} else if (isValueCharacter(c)) {
-				if (DEBUG) { console.log('detected missing quote 1'); }
-				ret = ret.substr(0, ret.length - 1) + '"';
-				state = lookingForKeyEnd;
-				i--;									// repeat
+				if (str.substring(i, i + 4) === 'null') {
+					// its just null...
+					ret += 'ull';
+					i += 3;								// skip to the end of null
+					state = lookingForCommaOrEnd;
+				} else {
+					if (DEBUG) { console.log('detected missing quote 1'); }
+					issues.push([c, i, 2]);
+					ret = ret.substr(0, ret.length - 1) + '"';
+					state = lookingForKeyEnd;
+					i--;								// repeat
+				}
 			} else if (c === ']' || c === '}') {
 				if (c === '}' && prev_char === '{') {
 					state = lookingForCommaOrEnd;
@@ -339,6 +516,7 @@ function fixIt(str, iter, maxIter) {
 					// was an empty object, all is well
 				} else {
 					if (DEBUG) { console.log('unexpected bracket, must be extra comma 1'); }
+					issues.push([c, i, 3]);
 					ret = ret.substr(0, ret.length - 2);
 					state = lookingForCommaOrEnd;
 					i--;								// repeat
@@ -348,6 +526,7 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForKeyStart;
 				} else {
 					if (DEBUG) { console.log('unexpected comma, must be extra comma 2'); }
+					issues.push([c, i, 4]);
 					parsing_history.pop();
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForKeyStart;
@@ -377,11 +556,13 @@ function fixIt(str, iter, maxIter) {
 				}
 			} else if (c === ':') {
 				if (DEBUG) { console.log('detected missing quote 2'); }
+				issues.push([c, i, 5]);
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForColon;
 				i--;									// repeat
 			} else if (c === '}') {
 				if (DEBUG) { console.log('detected missing quote 6'); }
+				issues.push([c, i, 6]);
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForCommaOrEnd;
 				i--;									// repeat
@@ -393,6 +574,13 @@ function fixIt(str, iter, maxIter) {
 			if (c === ':') {
 				state = lookingForValueStart;
 				posLastColon = ret.length - 1;
+			} else {
+				if (DEBUG) { console.log('detected missing colon 1'); }
+				issues.push([c, i, 24]);
+				ret = ret.substr(0, ret.length - 1) + ':';
+				state = lookingForValueStart;
+				posLastColon = ret.length - 1;
+				i--;
 			}
 		}
 
@@ -414,22 +602,33 @@ function fixIt(str, iter, maxIter) {
 				openSqrBrackets++;
 			} else if (c === ']') {
 				if (DEBUG) { console.log('unexpected bracket, must be extra comma 4'); }
+				issues.push([c, i, 7]);
 				ret = ret.substr(0, ret.length - 2);
 				state = lookingForCommaOrEnd;
 				i--;									// repeat
 			} else if (c === ':') {
 				if (DEBUG) { console.log('detected extra colon 1'); }
+				issues.push([c, i, 8]);
 				ret = ret.substr(0, ret.length - 1);
 				state = lookingForValueStart;
 			} else if (c === ',') {
 				if (DEBUG) { console.log('detected missing quotes 1'); }
+				issues.push([c, i, 9]);
 				ret = ret.substr(0, ret.length - 1) + '""';
 				state = lookingForCommaOrEnd;
 			} else if (isValueCharacter(c)) {
-				if (DEBUG) { console.log('detected missing quote 3'); }
-				ret = ret.substr(0, ret.length - 1) + '"';
-				state = lookingForKeyEnd;
-				i--;									// repeat
+				if (str.substring(i, i + 4) === 'null') {
+					// its just null...
+					ret += 'ull';						// skip to the end of null
+					i += 3;
+					state = lookingForCommaOrEnd;
+				} else {
+					if (DEBUG) { console.log('detected missing quote 3'); }
+					issues.push([c, i, 10]);
+					ret = ret.substr(0, ret.length - 1) + '"';
+					state = lookingForKeyEnd;
+					i--;								// repeat
+				}
 			}
 		}
 
@@ -447,6 +646,7 @@ function fixIt(str, iter, maxIter) {
 					}
 				} else {
 					if (DEBUG) { console.log('detected missing quote 4'); }
+					issues.push([c, i, 11]);
 					ret = ret.substr(0, ret.length - 1) + '"';
 					state = lookingForCommaOrEnd;
 					i--;								// repeat
@@ -459,6 +659,7 @@ function fixIt(str, iter, maxIter) {
 					i--;								// repeat, to detect the end of object
 				} else {
 					if (DEBUG) { console.log('detected missing quote 5'); }
+					issues.push([c, i, 12]);
 					ret = ret.substr(0, ret.length - 1) + '"';
 					state = lookingForCommaOrEnd;
 					i--;								// repeat
@@ -470,10 +671,12 @@ function fixIt(str, iter, maxIter) {
 				posLastSqrCloseBracket = ret.length - 1;
 			} else if (c === ':') {
 				if (DEBUG) { console.log('detected extra colon 2'); }
+				issues.push([c, i, 13]);
 				ret = ret.substr(0, ret.length - 1);
 				state = lookingForValueEnd;
 			} else if (parsingANumber && !isStrictNumber(c)) {		// its aaa was a number
 				if (DEBUG) { console.log('detected missing quotes on string in past', i, posNumberStart); }
+				issues.push([c, i, 14]);
 				parsingANumber = false;
 				ret = str.substring(0, posNumberStart) + '"';
 				state = lookingForValueEnd;
@@ -489,34 +692,42 @@ function fixIt(str, iter, maxIter) {
 		else if (state === lookingForCommaOrEnd) {
 			if (c === '"') {
 				if (DEBUG) { console.log('detected missing comma 1'); }
+				issues.push([c, i, 15]);
 				ret = ret.substr(0, ret.length - 1) + ',';
 				state = lookingForKeyStart;
 				i--;									// repeat
 			} else if (c === ',') {
 				if (prev_char === ',') {
 					if (DEBUG) { console.log('unexpected comma, must be extra comma 3'); }
+					issues.push([c, i, 16]);
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForKeyStart;
 				} else {
-					state = lookingForKeyStart;
+					if (get_parsing() === ARRAY) {
+						state = lookingForValueStart;
+					} else {
+						state = lookingForKeyStart;
+					}
 				}
 			} else if (c === '}') {
 				openCurlyBrackets--;
 				parsing_history.pop();
 				if (openCurlyBrackets < 0) {
 					if (DEBUG) { console.log('unexpected bracket, must be extra bracket 1'); }
+					issues.push([c, i, 17]);
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForCommaOrEnd;
 					openCurlyBrackets = 0;
 				}
 				if (i === str.length - 1) {				// if at the end...
 					balance_brackets();
-					if (DEBUG) { console.log('all done 1', openCurlyBrackets + '/' + openSqrBrackets); }
+					if (DEBUG) { console.log('all done 1', openCurlyBrackets + '/' + openSqrBrackets); console.log(issues); }
 					return ret;
 				}
 			} else if (c === ':') {
 				// this fix is a guess... the error is detected way after it happened
 				if (DEBUG) { console.log('detected missing bracket in past'); }
+				issues.push([c, i, 18]);
 				if (get_parsing() === OBJECT) {
 					ret = str.substring(0, posLastColon + 1) + '{';			// i know this state b/c {{ is impossible
 					state = lookingForKeyStart;
@@ -532,18 +743,20 @@ function fixIt(str, iter, maxIter) {
 				posLastSqrCloseBracket = ret.length - 1;
 				if (openSqrBrackets < 0) {
 					if (DEBUG) { console.log('unexpected bracket, must be extra bracket 2'); }
+					issues.push([c, i, 19]);
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForCommaOrEnd;
 					openSqrBrackets = 0;
 				}
 				if (i === str.length - 1) {				// if at the end..
 					balance_brackets();
-					if (DEBUG) { console.log('all done 2', openCurlyBrackets + '/' + openSqrBrackets); }
+					if (DEBUG) { console.log('all done 2', openCurlyBrackets + '/' + openSqrBrackets); console.log(issues); }
 					return ret;
 				}
 			} else if (c === '{') {
 				if (get_parsing() === ARRAY) {
 					if (DEBUG) { console.log('detected missing comma 3'); }
+					issues.push([c, i, 20]);
 					ret = ret.substr(0, ret.length - 1) + ',';
 					state = lookingForBracket;
 					i--;								// repeat
@@ -555,16 +768,18 @@ function fixIt(str, iter, maxIter) {
 	}
 
 	balance_brackets();									// this is not the proper exit, if we made it here, missing closing curly bracket
-	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets); }
+	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets); console.log(issues); }
 	return ret;
 
 	function balance_brackets() {
 		for (; openSqrBrackets > 0; openSqrBrackets--) {
 			if (DEBUG) { console.log('detected missing bracket 2'); }
+			issues.push(['---', ret.length, 22]);
 			ret += ']';
 		}
 		for (; openCurlyBrackets > 0; openCurlyBrackets--) {
 			if (DEBUG) { console.log('detected missing bracket 3'); }
+			issues.push(['---', ret.length, 23]);
 			ret += '}';
 		}
 	}
