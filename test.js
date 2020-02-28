@@ -2,11 +2,9 @@
 //const textInput1 = '{hey": "\'there",\n "test":"me", \n"a":["same"], \n"abc"test" \n "d": "e",\n "abc":"def"}';
 //const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "ghi": "jkl"}';
 
-const textInput1 = '{hey": "\'there",\n "test":"me", \n"abc"test" \n "d": "e",\n "abc":"def"}';
+const textInput1 = '{hey": "\'there",\n "test":"me", \n"abc"test" \n "d": "e",\n "abc":"def"} \nabc';
 const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "ghi": "jkl"}';
 document.querySelector('#inputText').innerHTML = breakMeDown(textInput1, textInput2);
-
-
 
 // pretty print json
 function breakMeDown(orig_str, fixed_str) {
@@ -81,22 +79,26 @@ function findAdditions(orig_line, fixed_line) {
 					ret += '<dif>';
 				}
 				ret += fixed_line[i];
-				x--;							// repeat char in original
+				x--;								// repeat char in original
 			} else if (fixed_line[i] === orig_line[x + 1]) {
 				// if the next character in orig matches this fixed character, than this char was deleted (back on track)
 				// probably at least
 				if (fixed_line[i]) { ret += fixed_line[i]; }
-				x++;							// skip deleted char
+				x++;								// skip deleted char
 			} else {
 				if (detectedDiff === false) {
 					detectedDiff = true;
 					ret += '<dif>';
 				}
 				ret += fixed_line[i];
-				x--;							// repeat char in original
+				x--;								// repeat char in original
 			}
 		}
 		x++;
+	}
+	if (detectedDiff === true) {
+		detectedDiff = false;
+		ret += '</dif>';							// close tag
 	}
 	return { str: ret, differences: differences };
 }
@@ -122,11 +124,19 @@ function findDeletions(orig_line, fixed_line) {
 			ret += orig_line[i];
 		} else {
 			differences++;
+
+			if (fixed_line[x] === undefined) {		// the character dne in fixed, it was deleted
+				if (detectedDiff === false) {
+					detectedDiff = true;
+					ret += '<dif>';
+				}
+			}
+
 			if (orig_line[i] === fixed_line[x + 1]) {
 				// if the next character in fixed does match this orig character, than this char was added (back on track)
 				// probably at least
 				if (orig_line[i]) { ret += orig_line[i]; }
-				x++;							// skip added char
+				x++;								// skip added char
 			} else if (orig_line[i + 1] === fixed_line[x]) {
 				// if the next character in orig matches this fixed character, than this char was deleted (back on track)
 				// probably at least
@@ -135,13 +145,17 @@ function findDeletions(orig_line, fixed_line) {
 					ret += '<dif>';
 				}
 				ret += orig_line[i];
-				x--;							// repeat char in fixed
+				x--;								// repeat char in fixed
 			} else {
 				if (orig_line[i]) { ret += orig_line[i]; }
-				x++;							// skip added char
+				x++;								// skip added char
 			}
 		}
 		x++;
+	}
+	if (detectedDiff === true) {
+		detectedDiff = false;
+		ret += '</dif>';							// close tag
 	}
 	return { str: ret, differences: differences };
 }
