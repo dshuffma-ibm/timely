@@ -171,7 +171,7 @@ pre code, pre samp{
 }
 pre [contenteditable]:focus{
 	background:#EAF2F7;
-	transition: background-color 0.4s ease;
+	transition: background-color 0.25s ease;
 }
 pre b{							/*keyword*/
 	font-weight:normal;
@@ -254,3 +254,30 @@ pre strong, pre strong *, pre strong * *{	/*boolean*/
 #scroll2top:hover{
 	color: #032F62;
 }
+
+
+/* edited line */
+pre edl{
+    background:#DDFFDD;
+}
+/* added character */
+pre edl dif{
+    background: #8e8;
+}
+
+pre edl, pre edl dif, pre ogl, pre ogl dif, pre sss{
+    /*padding: 5px 1px;*/
+    display: inline-block;
+    font-family: monospace;
+}
+
+/* original line */
+pre ogl{
+    background:#FFDDDD;
+}
+/* removed character */
+pre ogl dif{
+    background: #e68;
+}
+
+/* #FFAAAA */

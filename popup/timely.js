@@ -175,7 +175,7 @@ function listenHereSon() {
 				copyTextButton(line_endings(textInput));
 				setTimeout(() => {
 					document.querySelector('#inputText').classList.remove('success');
-				}, 250);
+				}, 350);
 			}
 		} catch (e) {
 			console.error(e);
