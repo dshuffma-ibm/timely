@@ -1,5 +1,5 @@
 
-const textInput1 = '{hey": ""there",\n "test":"me", \n"a":["same"], \n"abc"test"}';
+const textInput1 = '{hey": "\'there",\n "test":"me", \n"a":["same"], \n"abc"test"}';
 const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"test"}';
 
 document.querySelector('#inputText').innerHTML = breakMeDown(textInput1, textInput2);
@@ -24,37 +24,50 @@ function breakMeDown(orig_str, fixed_str) {
 	}
 
 	console.log('?', ret);
-
 	return ret;
 }
 
+//					other line, print-this-line
 function findAdditions(orig_line, fixed_line) {
 	console.log('ol', orig_line);
 	console.log('fl', fixed_line);
 	let ret = '';
 	let x = 0;
 	let detectedDiff = false;
-	for (let i = 0; i < orig_line.length; i++) {		// dsh change, should loop on the string that will be printed
-		console.log('i', i, x, orig_line[i], fixed_line[x], ret);
+	for (let i = 0; i < fixed_line.length; i++) {
+		console.log('i', i, x, fixed_line[i], orig_line[x], ret, detectedDiff);
 
-		if (orig_line[i] === fixed_line[x]) {
+		if (fixed_line[i] === orig_line[x]) {
 			if (detectedDiff === true) {
 				detectedDiff = false;
 				ret += '</dif>';
 			}
-			ret += orig_line[i];
+			ret += fixed_line[i];
 		} else {
-			if (detectedDiff === false) {
-				if (fixed_line[x + 1] !== orig_line[i]) {
-					// if the next character in fixed doesn't match this orig character, than this char was deleted
-					// probably at least
-					if (fixed_line[x]) { ret += fixed_line[x]; }
-					i++;
-				} else {
+			if (fixed_line[i + 1] === orig_line[x]) {
+				console.log('here1');
+				// if the next character in fixed does match this orig character, than this char was added (back on track)
+				// probably at least
+				if (detectedDiff === false) {
 					detectedDiff = true;
-					ret += '<dif>' + fixed_line[x];
-					i--;							// repeat
+					ret += '<dif>';
 				}
+				ret += fixed_line[i];
+				x--;							// repeat
+			} else if (fixed_line[i] === orig_line[x + 1]) {
+				console.log('here2');
+				// if the next character in orig matches this fixed character, than this char was deleted (back on track)
+				// probably at least
+				if (fixed_line[i]) { ret += fixed_line[i]; }
+				x++;
+			} else {
+				console.log('here3');
+				if (detectedDiff === false) {
+					detectedDiff = true;
+					ret += '<dif>';
+				}
+				ret += fixed_line[i];
+				x--;							// repeat
 			}
 		}
 		x++;
