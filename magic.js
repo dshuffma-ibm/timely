@@ -433,7 +433,6 @@ function fixIt(str, iter, maxIter) {
 	let openSqrBrackets = 0;
 	const parsing_history = [];
 	let ret = '';
-	let issues = [];
 
 	if (DEBUG) { console.log('-----------------'); }
 	// 1 replace single quote values with double
@@ -484,7 +483,6 @@ function fixIt(str, iter, maxIter) {
 				state = lookingForKeyStart;
 			} else {
 				if (DEBUG) { console.log('detected missing bracket 1'); }
-				issues.push([c, i, 1]);
 				ret = ret.substr(0, ret.length - 1) + '{';
 				state = lookingForKeyStart;
 				openCurlyBrackets++;
@@ -504,7 +502,6 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForCommaOrEnd;
 				} else {
 					if (DEBUG) { console.log('detected missing quote 1'); }
-					issues.push([c, i, 2]);
 					ret = ret.substr(0, ret.length - 1) + '"';
 					state = lookingForKeyEnd;
 					i--;								// repeat
@@ -516,7 +513,6 @@ function fixIt(str, iter, maxIter) {
 					// was an empty object, all is well
 				} else {
 					if (DEBUG) { console.log('unexpected bracket, must be extra comma 1'); }
-					issues.push([c, i, 3]);
 					ret = ret.substr(0, ret.length - 2);
 					state = lookingForCommaOrEnd;
 					i--;								// repeat
@@ -526,7 +522,6 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForKeyStart;
 				} else {
 					if (DEBUG) { console.log('unexpected comma, must be extra comma 2'); }
-					issues.push([c, i, 4]);
 					parsing_history.pop();
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForKeyStart;
@@ -556,13 +551,11 @@ function fixIt(str, iter, maxIter) {
 				}
 			} else if (c === ':') {
 				if (DEBUG) { console.log('detected missing quote 2'); }
-				issues.push([c, i, 5]);
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForColon;
 				i--;									// repeat
 			} else if (c === '}') {
 				if (DEBUG) { console.log('detected missing quote 6'); }
-				issues.push([c, i, 6]);
 				ret = ret.substr(0, ret.length - 1) + '"';
 				state = lookingForCommaOrEnd;
 				i--;									// repeat
@@ -576,7 +569,6 @@ function fixIt(str, iter, maxIter) {
 				posLastColon = ret.length - 1;
 			} else {
 				if (DEBUG) { console.log('detected missing colon 1'); }
-				issues.push([c, i, 24]);
 				ret = ret.substr(0, ret.length - 1) + ':';
 				state = lookingForValueStart;
 				posLastColon = ret.length - 1;
@@ -602,18 +594,15 @@ function fixIt(str, iter, maxIter) {
 				openSqrBrackets++;
 			} else if (c === ']') {
 				if (DEBUG) { console.log('unexpected bracket, must be extra comma 4'); }
-				issues.push([c, i, 7]);
 				ret = ret.substr(0, ret.length - 2);
 				state = lookingForCommaOrEnd;
 				i--;									// repeat
 			} else if (c === ':') {
 				if (DEBUG) { console.log('detected extra colon 1'); }
-				issues.push([c, i, 8]);
 				ret = ret.substr(0, ret.length - 1);
 				state = lookingForValueStart;
 			} else if (c === ',') {
 				if (DEBUG) { console.log('detected missing quotes 1'); }
-				issues.push([c, i, 9]);
 				ret = ret.substr(0, ret.length - 1) + '""';
 				state = lookingForCommaOrEnd;
 			} else if (isValueCharacter(c)) {
@@ -624,7 +613,6 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForCommaOrEnd;
 				} else {
 					if (DEBUG) { console.log('detected missing quote 3'); }
-					issues.push([c, i, 10]);
 					ret = ret.substr(0, ret.length - 1) + '"';
 					state = lookingForKeyEnd;
 					i--;								// repeat
@@ -646,7 +634,6 @@ function fixIt(str, iter, maxIter) {
 					}
 				} else {
 					if (DEBUG) { console.log('detected missing quote 4'); }
-					issues.push([c, i, 11]);
 					ret = ret.substr(0, ret.length - 1) + '"';
 					state = lookingForCommaOrEnd;
 					i--;								// repeat
@@ -659,7 +646,6 @@ function fixIt(str, iter, maxIter) {
 					i--;								// repeat, to detect the end of object
 				} else {
 					if (DEBUG) { console.log('detected missing quote 5'); }
-					issues.push([c, i, 12]);
 					ret = ret.substr(0, ret.length - 1) + '"';
 					state = lookingForCommaOrEnd;
 					i--;								// repeat
@@ -671,12 +657,10 @@ function fixIt(str, iter, maxIter) {
 				posLastSqrCloseBracket = ret.length - 1;
 			} else if (c === ':') {
 				if (DEBUG) { console.log('detected extra colon 2'); }
-				issues.push([c, i, 13]);
 				ret = ret.substr(0, ret.length - 1);
 				state = lookingForValueEnd;
 			} else if (parsingANumber && !isStrictNumber(c)) {		// its aaa was a number
 				if (DEBUG) { console.log('detected missing quotes on string in past', i, posNumberStart); }
-				issues.push([c, i, 14]);
 				parsingANumber = false;
 				ret = str.substring(0, posNumberStart) + '"';
 				state = lookingForValueEnd;
@@ -692,14 +676,12 @@ function fixIt(str, iter, maxIter) {
 		else if (state === lookingForCommaOrEnd) {
 			if (c === '"') {
 				if (DEBUG) { console.log('detected missing comma 1'); }
-				issues.push([c, i, 15]);
 				ret = ret.substr(0, ret.length - 1) + ',';
 				state = lookingForKeyStart;
 				i--;									// repeat
 			} else if (c === ',') {
 				if (prev_char === ',') {
 					if (DEBUG) { console.log('unexpected comma, must be extra comma 3'); }
-					issues.push([c, i, 16]);
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForKeyStart;
 				} else {
@@ -714,20 +696,18 @@ function fixIt(str, iter, maxIter) {
 				parsing_history.pop();
 				if (openCurlyBrackets < 0) {
 					if (DEBUG) { console.log('unexpected bracket, must be extra bracket 1'); }
-					issues.push([c, i, 17]);
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForCommaOrEnd;
 					openCurlyBrackets = 0;
 				}
 				if (i === str.length - 1) {				// if at the end...
 					balance_brackets();
-					if (DEBUG) { console.log('all done 1', openCurlyBrackets + '/' + openSqrBrackets); console.log(issues); }
+					if (DEBUG) { console.log('all done 1', openCurlyBrackets + '/' + openSqrBrackets); }
 					return ret;
 				}
 			} else if (c === ':') {
 				// this fix is a guess... the error is detected way after it happened
 				if (DEBUG) { console.log('detected missing bracket in past'); }
-				issues.push([c, i, 18]);
 				if (get_parsing() === OBJECT) {
 					ret = str.substring(0, posLastColon + 1) + '{';			// i know this state b/c {{ is impossible
 					state = lookingForKeyStart;
@@ -743,20 +723,18 @@ function fixIt(str, iter, maxIter) {
 				posLastSqrCloseBracket = ret.length - 1;
 				if (openSqrBrackets < 0) {
 					if (DEBUG) { console.log('unexpected bracket, must be extra bracket 2'); }
-					issues.push([c, i, 19]);
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForCommaOrEnd;
 					openSqrBrackets = 0;
 				}
 				if (i === str.length - 1) {				// if at the end..
 					balance_brackets();
-					if (DEBUG) { console.log('all done 2', openCurlyBrackets + '/' + openSqrBrackets); console.log(issues); }
+					if (DEBUG) { console.log('all done 2', openCurlyBrackets + '/' + openSqrBrackets); }
 					return ret;
 				}
 			} else if (c === '{') {
 				if (get_parsing() === ARRAY) {
 					if (DEBUG) { console.log('detected missing comma 3'); }
-					issues.push([c, i, 20]);
 					ret = ret.substr(0, ret.length - 1) + ',';
 					state = lookingForBracket;
 					i--;								// repeat
@@ -768,18 +746,16 @@ function fixIt(str, iter, maxIter) {
 	}
 
 	balance_brackets();									// this is not the proper exit, if we made it here, missing closing curly bracket
-	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets); console.log(issues); }
+	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets); }
 	return ret;
 
 	function balance_brackets() {
 		for (; openSqrBrackets > 0; openSqrBrackets--) {
 			if (DEBUG) { console.log('detected missing bracket 2'); }
-			issues.push(['---', ret.length, 22]);
 			ret += ']';
 		}
 		for (; openCurlyBrackets > 0; openCurlyBrackets--) {
 			if (DEBUG) { console.log('detected missing bracket 3'); }
-			issues.push(['---', ret.length, 23]);
 			ret += '}';
 		}
 	}
