@@ -177,8 +177,8 @@ function listenHereSon() {
 				} catch (e) {
 					prev_text = textInput;
 					fixed_text = fixJson(line_endings(textInput));
-					JSON.parse(fixed_text);								// test the fix
-					const diff = document.querySelector('#inputText').innerHTML = breakMeDown(prev_text, fixed_text);
+					const fixed_obj = JSON.parse(fixed_text);								// test the fix
+					const diff = document.querySelector('#inputText').innerHTML = breakMeDown(prev_text, JSON.stringify(fixed_obj, null, 2));
 					document.querySelector('.accept').classList.remove('hidden');
 					document.querySelector('.undo').classList.remove('hidden');
 					document.querySelector('#inputText').innerHTML = diff;
@@ -191,6 +191,8 @@ function listenHereSon() {
 				document.querySelector('#inputText').innerHTML = prettyPrint(fixed_text);
 				document.querySelector('.accept').classList.add('hidden');
 				document.querySelector('.undo').classList.add('hidden');
+			} else if (e.target.classList.contains('stripHtml')) {
+				document.querySelector('#inputText').innerText = textInput;
 			} else if (e.target.classList.contains('copy')) {
 				document.querySelector('#inputText').classList.add('success');
 				copyTextButton(line_endings(textInput));

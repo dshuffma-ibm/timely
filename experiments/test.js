@@ -5,8 +5,45 @@
 //const textInput1 = '{hey": "\'there",\n "test":"me", \n"abc"test" \n "d": "e",\n "abc":"def"} \nabc';
 //const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "adi": "def"}';
 
-const textInput1 = '{hey": "\'there",\n "test":"me", \n"a":["same"], \n"abc"test" \n "d": "e",\n "abc":"def"}';
-const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "aec": "deg"}';
+//const textInput1 = '{hey": "\'there",\n "test":"me", \n"a":["same"], \n"abc"test" \n "d": "e",\n "abc":"def"}';
+//const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "aec": "deg"}';
+
+const textInput1 = `{
+    "hey": {
+        "boo": [
+            {
+				"who": "that"
+			}
+            {
+				"who2": "that2"
+			}
+        ]
+        "hiss": "234"
+        "hello": [
+			"buddy"
+			"pal"
+		]
+    }
+    "hi": 123
+}`;
+const textInput2 = `{
+	"hey": {
+		"boo": [
+			{
+				"who": "that"
+			},
+			{
+				"who2": "that2"
+			}
+		],
+		"hiss": "234",
+		"hello": [
+			"buddy",
+			"pal"
+		]
+	},
+	"hi": 123
+}`;
 document.querySelector('#inputText').innerHTML = breakMeDown(textInput1, textInput2);
 
 // pretty print json
@@ -16,6 +53,8 @@ function breakMeDown(orig_str, fixed_str) {
 	const fixed_lines = fixed_str.split('\n');
 	let x = 0;
 	for (let i = 0; i < orig_lines.length; i++) {
+		orig_lines[i] = orig_lines[i].trim();
+		fixed_lines[x] = fixed_lines[x].trim();
 		if (orig_lines[i] === fixed_lines[x]) {
 			ret += '<sss>🗸 ' + orig_lines[i] + '</sss>\n';
 		} else {
@@ -149,7 +188,7 @@ function findDeletions(orig_line, fixed_line) {
 					ret += '<dif>';
 				}
 				ret += orig_line[i];
-			} else	if (orig_line[i] === fixed_line[x + 1]) {
+			} else if (orig_line[i] === fixed_line[x + 1]) {
 				// if the next character in fixed does match this orig character, than this char was added (back on track)
 				// probably at least
 				if (orig_line[i]) { ret += orig_line[i]; }
