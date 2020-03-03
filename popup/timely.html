@@ -67,9 +67,12 @@
 				<button class="formatButton sortKeys" type="button" title="Sort JSON keys">Sort JSON Keys</button>
 				<button class="formatButton js2json" type="button" title="Convert a JS object to JSON">JS To JSON</button>
 				<button class="formatButton json2js" type="button" title="Convert JSON to a less formal JS object">JSON To JS</button>
-				<div style="text-align: right; margin-right: 12px;">
-					<button class="formatButton clear" type="button" title="Clear the text area">Clear</button>
-					<button class="formatButton copy" type="button" id="copyButton" title="Copy textarea to clipboard">
+				<button class="formatButton fixJson" type="button" title="Try to fix invalid JSON. No refunds. Good luck.">Fix JSON</button>
+				<div style="text-align: right; margin-right: 18px;">
+					<button class="formatButton accept toolButton hidden" type="button" title="Wow! it worked? Accept the green text.">Accept</button>
+					<button class="formatButton undo toolButton hidden" type="button" title="Revert the change">Undo</button>
+					<button class="formatButton clear toolButton" type="button" title="Clear the text area">Clear</button>
+					<button class="formatButton copy toolButton" type="button" id="copyButton" title="Copy textarea to clipboard">
 						<svg id="copyIcon" title="Copy Text" aria-hidden="true" data-prefix="fas" data-icon="copy" class="svg-inline--fa fa-copy fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"></path></svg> Copy
 					</button>
 				</div>
@@ -86,6 +89,7 @@
 		</div>
 	</div>
 	<script src="../common.js"></script>
+	<script src="actions.js"></script>
 	<script src="timely.js"></script>
 
 	<div id="scroll2top" class="hidden">Top</div>
