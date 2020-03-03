@@ -2,8 +2,11 @@
 //const textInput1 = '{hey": "\'there",\n "test":"me", \n"a":["same"], \n"abc"test" \n "d": "e",\n "abc":"def"}';
 //const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "ghi": "jkl"}';
 
-const textInput1 = '{hey": "\'there",\n "test":"me", \n"abc"test" \n "d": "e",\n "abc":"def"} \nabc';
-const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "ghi": "jkl"}';
+//const textInput1 = '{hey": "\'there",\n "test":"me", \n"abc"test" \n "d": "e",\n "abc":"def"} \nabc';
+//const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "adi": "def"}';
+
+const textInput1 = '{hey": "\'there",\n "test":"me", \n"a":["same"], \n"abc"test" \n "d": "e",\n "abc":"def"}';
+const textInput2 = '{"hey": "there", \n"test":"me", \n"a":["same"], \n"abc":"tet" \n "d": "e",\n "aec": "deg"}';
 document.querySelector('#inputText').innerHTML = breakMeDown(textInput1, textInput2);
 
 // pretty print json
@@ -30,17 +33,14 @@ function breakMeDown(orig_str, fixed_str) {
 
 			if (total2 !== null && total2 < total) {
 				console.log('the next line is a better match');
-				let blank = '';
-				for (let z = 0; z < add.str.length; z++) { blank += ' '; }
-				ret += '<ogl>-<diff>' + blank + '</diff></ogl>\n';
-				ret += '<edl>+ ' + add.str + '</edl>\n';
+				ret += '<edl>+ <dif>' + add.str + '</dif></edl>\n';
 				ret += '\n';
 				ret += '<ogl>- ' + del2.str + '</ogl>\n';
 				ret += '<edl>+ ' + add2.str + '</edl>\n';
 				x++;
 			} else {
 				ret += '<ogl>- ' + del.str + '</ogl>\n';
-				ret += '<edl>+ ' + add.str + '</edl>\n';
+				if (add.str) { ret += '<edl>+ ' + add.str + '</edl>\n'; }
 			}
 		}
 		ret += '\n';
@@ -71,7 +71,16 @@ function findAdditions(orig_line, fixed_line) {
 			ret += fixed_line[i];
 		} else {
 			differences++;
-			if (fixed_line[i + 1] === orig_line[x]) {
+
+			if (orig_line[i + 1] === fixed_line[x + 1]) {
+				// if the next character in orig matches the next character in fixed.. than this char was replaced (back on track)
+				// probably at least
+				if (detectedDiff === false) {
+					detectedDiff = true;
+					ret += '<dif>';
+				}
+				ret += fixed_line[i];
+			} else if (fixed_line[i + 1] === orig_line[x]) {
 				// if the next character in fixed does match this orig character, than this char was added (back on track)
 				// probably at least
 				if (detectedDiff === false) {
@@ -132,7 +141,15 @@ function findDeletions(orig_line, fixed_line) {
 				}
 			}
 
-			if (orig_line[i] === fixed_line[x + 1]) {
+			if (orig_line[i + 1] === fixed_line[x + 1]) {
+				// if the next character in orig matches the next character in fixed.. than this char was replaced (back on track)
+				// probably at least
+				if (detectedDiff === false) {
+					detectedDiff = true;
+					ret += '<dif>';
+				}
+				ret += orig_line[i];
+			} else	if (orig_line[i] === fixed_line[x + 1]) {
 				// if the next character in fixed does match this orig character, than this char was added (back on track)
 				// probably at least
 				if (orig_line[i]) { ret += orig_line[i]; }
