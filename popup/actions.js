@@ -26,6 +26,7 @@ function fixIt(str, iter, maxIter) {
 	let posLastColon = null;
 	let posLastSqrCloseBracket = null;
 	let posNumberStart = null;
+	let posLastComma = null;
 	let openCurlyBrackets = 0;
 	let openSqrBrackets = 0;
 	const parsing_history = [];
@@ -62,7 +63,7 @@ function fixIt(str, iter, maxIter) {
 
 		if (c === ' ') { continue; }						// spaces are meaningless, next
 		if (c === '\t' || c === '\n' || c === '\r') {		// tabs, newlines, cr are illegal, go figure, remove it
-			if (DEBUG) { console.log('unexpected whitespace', ((c === '\t') ? 'tab' : (c === '\n') ? 'newline' : 'carriage return')); }
+			//if (DEBUG) { console.log('unexpected whitespace', ((c === '\t') ? 'tab' : (c === '\n') ? 'newline' : 'carriage return')); }
 			ret = ret.substr(0, ret.length - 1);
 			continue;
 		}
@@ -116,6 +117,7 @@ function fixIt(str, iter, maxIter) {
 				}
 			} else if (c === ',') {
 				if (parsingANumber) {
+					posLastComma = i;
 					state = lookingForKeyStart;
 				} else {
 					if (DEBUG) { console.log('unexpected comma, must be extra comma 2'); }
@@ -124,9 +126,18 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForKeyStart;
 				}
 			} else if (c === '{') {
-				parsing_history.push(OBJECT);
-				openCurlyBrackets++;
-				state = lookingForKeyStart;
+				if (get_parsing() === ARRAY || posLastComma === null) {
+					parsing_history.push(OBJECT);
+					openCurlyBrackets++;
+					state = lookingForKeyStart;
+				} else {
+					if (DEBUG) { console.log('unexpected open bracket, must be missing bracket in past', posLastComma); }
+					ret = str.substring(0, posLastComma) + '}';	// close it
+					openCurlyBrackets--;
+					parsing_history.pop();
+					state = lookingForCommaOrEnd;
+					i = posLastComma;					// go back and try again (on the character after that comma)
+				}
 			} else if (c === '[') {
 				parsing_history.push(ARRAY);
 				openSqrBrackets++;
@@ -224,6 +235,7 @@ function fixIt(str, iter, maxIter) {
 			} else if (c === ',') {
 				if (parsingANumber) {
 					parsingANumber = false;
+					posLastComma = i;
 					if (get_parsing() === ARRAY) {
 						state = lookingForValueStart;
 					} else {
@@ -282,6 +294,7 @@ function fixIt(str, iter, maxIter) {
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForKeyStart;
 				} else {
+					posLastComma = i;
 					if (get_parsing() === ARRAY) {
 						state = lookingForValueStart;
 					} else {
@@ -529,7 +542,7 @@ function findDeletions(orig_line, fixed_line) {
 					ret += '<dif>';
 				}
 				ret += orig_line[i];
-			} else	if (orig_line[i] === fixed_line[x + 1]) {
+			} else if (orig_line[i] === fixed_line[x + 1]) {
 				// if the next character in fixed does match this orig character, than this char was added (back on track)
 				// probably at least
 				if (orig_line[i]) { ret += orig_line[i]; }

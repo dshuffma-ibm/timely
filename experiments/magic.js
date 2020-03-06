@@ -374,7 +374,14 @@ let huge = `{
 let null_test1 = '{"test": null, "arr": ["t", null, 5]}';
 let missing_colon = '{"test": null, "arr" ["t", 5]}';
 let extra_colon4 = '{"test": null, "arr" ["t", :5]}';
-
+let missing_bracket5 = `{
+	"hey": {
+		"boo": [
+			{"who": "that"
+			,{"who2": "that2"}
+		]
+	}
+}`;
 // -------------------------------------------------------------------------------------------------------------------------
 let test_cases = [
 	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2, 	// 5
@@ -387,9 +394,10 @@ let test_cases = [
 	extra_bracket4, extra_bracket5, extra_bracket6, extra_colon1, extra_colon2,							// 40
 	extra_colon3, missing_quotes1, missing_quotes2, extra_quote4, extra_quote5,							// 45
 	escape_char1, single_quotes2, escape_char2, duration1, duration2,									// 50
-	deep, huge, null_test1, missing_colon, extra_colon4													// 55
+	deep, huge, null_test1, missing_colon, extra_colon4,												// 55
+	missing_bracket5,
 ];
-//test_cases = [extra_colon];
+//test_cases = [missing_bracket5];
 let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
@@ -429,6 +437,7 @@ function fixIt(str, iter, maxIter) {
 	let posLastColon = null;
 	let posLastSqrCloseBracket = null;
 	let posNumberStart = null;
+	let posLastComma = null;
 	let openCurlyBrackets = 0;
 	let openSqrBrackets = 0;
 	const parsing_history = [];
@@ -465,7 +474,7 @@ function fixIt(str, iter, maxIter) {
 
 		if (c === ' ') { continue; }						// spaces are meaningless, next
 		if (c === '\t' || c === '\n' || c === '\r') {		// tabs, newlines, cr are illegal, go figure, remove it
-			if (DEBUG) { console.log('unexpected whitespace', ((c === '\t') ? 'tab' : (c === '\n') ? 'newline' : 'carriage return')); }
+			//if (DEBUG) { console.log('unexpected whitespace', ((c === '\t') ? 'tab' : (c === '\n') ? 'newline' : 'carriage return')); }
 			ret = ret.substr(0, ret.length - 1);
 			continue;
 		}
@@ -519,6 +528,7 @@ function fixIt(str, iter, maxIter) {
 				}
 			} else if (c === ',') {
 				if (parsingANumber) {
+					posLastComma = i;
 					state = lookingForKeyStart;
 				} else {
 					if (DEBUG) { console.log('unexpected comma, must be extra comma 2'); }
@@ -527,9 +537,18 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForKeyStart;
 				}
 			} else if (c === '{') {
-				parsing_history.push(OBJECT);
-				openCurlyBrackets++;
-				state = lookingForKeyStart;
+				if (get_parsing() === ARRAY || posLastComma === null) {
+					parsing_history.push(OBJECT);
+					openCurlyBrackets++;
+					state = lookingForKeyStart;
+				} else {
+					if (DEBUG) { console.log('unexpected open bracket, must be missing bracket in past', posLastComma); }
+					ret = str.substring(0, posLastComma) + '}';	// close it
+					openCurlyBrackets--;
+					parsing_history.pop();
+					state = lookingForCommaOrEnd;
+					i = posLastComma ;					// go back and try again (on the character after that comma)
+				}
 			} else if (c === '[') {
 				parsing_history.push(ARRAY);
 				openSqrBrackets++;
@@ -627,6 +646,7 @@ function fixIt(str, iter, maxIter) {
 			} else if (c === ',') {
 				if (parsingANumber) {
 					parsingANumber = false;
+					posLastComma = i;
 					if (get_parsing() === ARRAY) {
 						state = lookingForValueStart;
 					} else {
@@ -685,6 +705,7 @@ function fixIt(str, iter, maxIter) {
 					ret = ret.substr(0, ret.length - 1);
 					state = lookingForKeyStart;
 				} else {
+					posLastComma = i;
 					if (get_parsing() === ARRAY) {
 						state = lookingForValueStart;
 					} else {
