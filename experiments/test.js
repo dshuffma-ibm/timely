@@ -11,46 +11,39 @@
 const textInput1 = `{
     "hey": {
         "boo": [
-            {
-				"who": "that"
-			}
-            {
-				"who2": "that2"
-			}
+            {"who": "that 1"
+            ,{"who2": "that2"}
         ]
-        "hiss": "234"
-        "hello": [
-			"buddy"
-			"pal"
-		]
     }
-    "hi": 123
 }`;
 const textInput2 = `{
 	"hey": {
 		"boo": [
-			{
-				"who": "that"
-			},
-			{
-				"who2": "that2"
-			}
-		],
-		"hiss": "234",
-		"hello": [
-			"buddy",
-			"pal"
+			{"who": "that 1"},
+			{"who2": "that2"}
 		]
-	},
-	"hi": 123
+	}
 }`;
 document.querySelector('#inputText').innerHTML = breakMeDown(textInput1, textInput2);
+
+function break_after(str, characters) {
+	const ret = [];
+	for (let i = 0; i < str.length - 1;) {
+		ret.push(str.substring(i, i + characters));
+		i += characters;
+	}
+	return ret;
+}
 
 // pretty print json
 function breakMeDown(orig_str, fixed_str) {
 	let ret = '';
-	const orig_lines = orig_str.split('\n');
-	const fixed_lines = fixed_str.split('\n');
+	const LEN = 100;
+	const orig_lines = break_after(orig_str.replace(/\t/g, '').replace(/\s*([^"])/g, '$1'), LEN);
+	const fixed_lines = break_after(fixed_str.replace(/\t/g, '').replace(/\s*([^"])/g, '$1'), LEN);
+	console.log(orig_lines);
+	console.log(fixed_lines);
+
 	let x = 0;
 	for (let i = 0; i < orig_lines.length; i++) {
 		orig_lines[i] = orig_lines[i].trim();

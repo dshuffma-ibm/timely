@@ -405,8 +405,12 @@ function fixIt(str, iter, maxIter) {
 // ------------------------------------------------------
 function breakMeDown(orig_str, fixed_str) {
 	let ret = '';
-	const orig_lines = orig_str.split('\n');
-	const fixed_lines = fixed_str.split('\n');
+	const LEN = 90;
+	const orig_lines = break_after(orig_str.replace(/\t/g, '').replace(/\s*([^"])/g, '$1'), LEN);
+	const fixed_lines = break_after(fixed_str.replace(/\t/g, '').replace(/\s*([^"])/g, '$1'), LEN);
+	console.log(orig_lines);
+	console.log(fixed_lines);
+
 	let x = 0;
 	for (let i = 0; i < orig_lines.length; i++) {
 		if (orig_lines[i] === fixed_lines[x]) {
@@ -442,6 +446,16 @@ function breakMeDown(orig_str, fixed_str) {
 	return ret;
 }
 
+// break each line into equal parts
+function break_after(str, characters) {
+	const ret = [];
+	for (let i = 0; i < str.length - 1;) {
+		ret.push(str.substring(i, i + characters));
+		i += characters;
+	}
+	return ret;
+}
+
 //					other line, print-this-line
 function findAdditions(orig_line, fixed_line) {
 	console.log('findAdditions ol', orig_line);
@@ -450,8 +464,8 @@ function findAdditions(orig_line, fixed_line) {
 	let ret = '';
 	let x = 0;
 	let detectedDiff = false;
-	orig_line = orig_line ? orig_line : '';
-	fixed_line = fixed_line ? fixed_line : '';
+	orig_line = orig_line ? orig_line.trim() : '';
+	fixed_line = fixed_line ? fixed_line.trim() : '';
 
 	for (let i = 0; i < fixed_line.length; i++) {
 		console.log(i, x, fixed_line[i], orig_line[x], ret, detectedDiff);
