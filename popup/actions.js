@@ -406,8 +406,8 @@ function fixIt(str, iter, maxIter) {
 function breakMeDown(orig_str, fixed_str) {
 	let ret = '';
 	const LEN = 90;
-	const orig_lines = break_after(orig_str.replace(/\t/g, '').replace(/\s*([^"])/g, '$1'), LEN);
-	const fixed_lines = break_after(fixed_str.replace(/\t/g, '').replace(/\s*([^"])/g, '$1'), LEN);
+	const orig_lines = break_after(orig_str.replace(/[\t\n\r]/g, '').replace(/\s*([^"])/g, '$1').replace(/[{[]\s+"/g, '{"'), LEN);
+	const fixed_lines = break_after(fixed_str.replace(/[\t\n\r]/g, '').replace(/\s*([^"])/g, '$1').replace(/[{[]\s+"/g, '{"'), LEN);
 	console.log(orig_lines);
 	console.log(fixed_lines);
 
