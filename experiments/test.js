@@ -14,10 +14,34 @@ const textInput1 = `{
             {"who": "that 1"
             ,{"who2": "that2"}
         ]
-    }
+	},
+	"hey2": {
+		"boo": [
+			{"who": "that 1"},
+			{"who2": "that2"}
+		]
+	},
+	"hey3": {
+		"boo": [
+			{"who": "that 1"},
+			{"who2": "that2"}
+		]
+	}
 }`;
 const textInput2 = `{
 	"hey": {
+		"boo": [
+			{"who": "that 1"},
+			{"who2": "that2"}
+		]
+	},
+	"hey2": {
+		"boo": [
+			{"who": "that 1"},
+			{"who2": "that2"}
+		]
+	},
+	"hey3": {
 		"boo": [
 			{"who": "that 1"},
 			{"who2": "that2"}
@@ -38,9 +62,9 @@ function break_after(str, characters) {
 // pretty print json
 function breakMeDown(orig_str, fixed_str) {
 	let ret = '';
-	const LEN = 100;
-	const orig_lines = break_after(orig_str.replace(/\t/g, '').replace(/\s*([^"])/g, '$1'), LEN);
-	const fixed_lines = break_after(fixed_str.replace(/\t/g, '').replace(/\s*([^"])/g, '$1'), LEN);
+	const LEN = 90;
+	const orig_lines = break_after(orig_str.replace(/[\t\n\r]/g, '').replace(/\s*([^"])/g, '$1').replace(/[{[]\s+"/g, '{"'), LEN);
+	const fixed_lines = break_after(fixed_str.replace(/[\t\n\r]/g, '').replace(/\s*([^"])/g, '$1').replace(/[{[]\s+"/g, '{"'), LEN);
 	console.log(orig_lines);
 	console.log(fixed_lines);
 
