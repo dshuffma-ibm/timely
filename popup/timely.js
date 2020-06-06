@@ -167,6 +167,8 @@ function listenHereSon() {
 				document.querySelector('#inputText').innerHTML = unescapeIt(line_endings(textInput));
 			} else if (e.target.classList.contains('clear')) {
 				document.querySelector('#inputText').innerHTML = '';
+				document.querySelector('.accept').classList.add('hidden');
+				document.querySelector('.undo').classList.add('hidden');
 			} else if (e.target.classList.contains('js2json')) {
 				document.querySelector('#inputText').innerHTML = prettyPrint(js2json(line_endings(textInput)));
 			} else if (e.target.classList.contains('json2js')) {

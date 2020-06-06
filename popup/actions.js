@@ -30,12 +30,15 @@ function fixIt(str, iter, maxIter) {
 	let posNumberStart = null;
 	let strPosNumberStart = null;
 	let strPosLastComma = null;
+	let posLastComma = null;
 	let openCurlyBrackets = 0;
 	let openSqrBrackets = 0;
 	const parsing_history = [];
 	let ret = '';
 
 	if (DEBUG) { console.log('-----------------'); }
+	if (typeof str !== 'string') { str = str.toString(); }
+
 	// 1 replace single quote values with double
 	// 2 replace single quote keys with double
 	// 3 replace 2 curly brackets with 1
@@ -123,6 +126,7 @@ function fixIt(str, iter, maxIter) {
 			} else if (c === ',') {
 				if (parsingANumber) {
 					strPosLastComma = i;
+					posLastComma = ret.length  - 1;
 					state = lookingForKeyStart;
 				} else {
 					if (DEBUG) { console.log('unexpected comma, must be extra comma 2'); }
@@ -136,7 +140,7 @@ function fixIt(str, iter, maxIter) {
 					openCurlyBrackets++;
 					state = lookingForKeyStart;
 				} else {
-					if (DEBUG) { console.log('unexpected open bracket, must be missing bracket in past', strPosLastComma); }
+					if (DEBUG) { console.log('unexpected open bracket, must be missing bracket in past 1'); }
 					ret = str.substring(0, strPosLastComma) + '}';	// close it
 					openCurlyBrackets--;
 					parsing_history.pop();
@@ -221,10 +225,15 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForCommaOrEnd;
 					posLastSqrCloseBracket = ret.length - 1;
 					strPosLastSqrCloseBracket = i;
-				} else {
+				} else if (prev_char === ',') {
 					if (DEBUG) { console.log('unexpected bracket, must be extra comma 4'); }
 					ret = ret.substr(0, ret.length - 2);
 					state = lookingForCommaOrEnd;
+					i--;									// repeat
+				} else {
+					if (DEBUG) { console.log('unexpected bracket, must be missing bracket in past 2'); }
+					ret = ret.substr(0, ret.length - 2) + '[';
+					state = lookingForValueStart;
 					i--;									// repeat
 				}
 			} else if (c === '}') {
@@ -271,6 +280,7 @@ function fixIt(str, iter, maxIter) {
 				if (parsingANumber) {
 					parsingANumber = false;
 					strPosLastComma = i;
+					posLastComma = ret.length  - 1;
 					if (get_parsing() === ARRAY) {
 						state = lookingForValueStart;
 					} else {
@@ -320,7 +330,7 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForValueEnd;
 					skip = true;
 				} else {
-					if (DEBUG) { console.log('detected missing quotes on string in past', i, posNumberStart); }
+					if (DEBUG) { console.log('detected missing quotes on string in past'); }
 					parsingANumber = false;
 					ret = str.substring(0, strPosNumberStart) + '"';
 					state = lookingForValueEnd;
@@ -355,6 +365,7 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForKeyStart;
 				} else {
 					strPosLastComma = i;
+					posLastComma = ret.length  - 1;
 					if (get_parsing() === ARRAY) {
 						state = lookingForValueStart;
 					} else {
@@ -383,7 +394,7 @@ function fixIt(str, iter, maxIter) {
 					i = strPostLastColon;
 					openCurlyBrackets++;
 				} else {
-					ret = ret.substring(0, posLastSqrCloseBracket + 1) + ']' + str.substring(strPosLastSqrCloseBracket + 1);
+					ret = ret.substring(0, posLastComma) + ']' + str.substring(strPosLastComma);
 					return fixIt(ret, iter, maxIter);				// I don't know what state we were in at this position, so repeat...
 				}
 			} else if (c === ']') {
@@ -415,13 +426,24 @@ function fixIt(str, iter, maxIter) {
 				if (DEBUG) { console.log('detected extra quote 1'); }
 				ret = ret.substr(0, ret.length - 2);
 				state = lookingForValueEnd;
-				i--;								// repeat
+				i--;									// repeat
 			}
 		}
 	}
 
+	// ----- ending soon ----- //
+	if (state === lookingForKeyEnd) {
+		if (DEBUG) { console.log('detected missing quote 10'); }
+		ret += '": ""';
+	}
+	if (state === lookingForValueEnd) {					// this is a theoretical/made up state, feel free to remove it
+		if (parsingANumber === false) {
+			if (DEBUG) { console.log('detected missing quote 11'); }
+			ret += '"';
+		}
+	}
 	balance_brackets();									// this is not the proper exit, if we made it here, missing closing curly bracket
-	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets); }
+	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets, state); }
 	return ret;
 
 	function balance_brackets() {
@@ -545,7 +567,6 @@ function break_items(str) {
 			break;
 		}
 	}
-	console.log('?', ret);
 	return ret;
 
 	function indexOfThings(str) {
@@ -558,7 +579,6 @@ function break_items(str) {
 				pos += thing.length
 				if (ret === -1 || (pos < ret)) {
 					ret = pos;
-					//return pos + thing.length;
 				}
 			}
 		}

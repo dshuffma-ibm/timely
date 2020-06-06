@@ -502,7 +502,21 @@ let missing_bracket9 = `{
 		}
 	}
 }`;
-// dsh todo split each line by its orig/natural line breaks and make diff color code compare from that
+let missing_bracket10 = `{
+	"value": {
+		"identities": 
+		]
+	}
+}`;
+let dumb = 'hello there';
+let dumber = 1234;
+let missing_bracket11 = `{
+	"key": [
+		"item"
+	,
+	"another": 40
+}`;
+
 // -------------------------------------------------------------------------------------------------------------------------
 let test_cases = [
 	missing_comma, nested_obj_missing_comma, nested_obj_missing_comma2, missing_quote, missing_quote2, 	// 5
@@ -519,14 +533,16 @@ let test_cases = [
 	missing_bracket5, missing_quote5, missing_colon2, missing_bracket7, extra_comma4,					// 60
 	valid_with_brackets, valid_with_brackets2, valid_with_colon, missing_bracket8, extra_quote6,		// 65
 	extra_quote7, missing_comma2, extra_bracket8, huge, smaller, 										// 70
-	smaller2,
+	smaller2, dumb, dumber
 ];
-//test_cases = [extra_bracket8];
+//test_cases = [missing_bracket11];
 let DEBUG = test_cases.length === 1;
 let results = [];
 let pass = true;
 let errors = 0;
+let onTest = 0;
 for (let i in test_cases) {
+	onTest = i;
 	let fixed = fixIt(test_cases[i], 0, test_cases[i].length * 8);
 	if (DEBUG) { console.log('final:\n', fixed); }
 	try {
@@ -570,12 +586,15 @@ function fixIt(str, iter, maxIter) {
 	let posNumberStart = null;
 	let strPosNumberStart = null;
 	let strPosLastComma = null;
+	let posLastComma = null;
 	let openCurlyBrackets = 0;
 	let openSqrBrackets = 0;
 	const parsing_history = [];
 	let ret = '';
 
 	if (DEBUG) { console.log('-----------------'); }
+	if (typeof str !== 'string') { str = str.toString(); }
+
 	// 1 replace single quote values with double
 	// 2 replace single quote keys with double
 	// 3 replace 2 curly brackets with 1
@@ -663,6 +682,7 @@ function fixIt(str, iter, maxIter) {
 			} else if (c === ',') {
 				if (parsingANumber) {
 					strPosLastComma = i;
+					posLastComma = ret.length  - 1;
 					state = lookingForKeyStart;
 				} else {
 					if (DEBUG) { console.log('unexpected comma, must be extra comma 2'); }
@@ -676,7 +696,7 @@ function fixIt(str, iter, maxIter) {
 					openCurlyBrackets++;
 					state = lookingForKeyStart;
 				} else {
-					if (DEBUG) { console.log('unexpected open bracket, must be missing bracket in past', strPosLastComma); }
+					if (DEBUG) { console.log('unexpected open bracket, must be missing bracket in past 1'); }
 					ret = str.substring(0, strPosLastComma) + '}';	// close it
 					openCurlyBrackets--;
 					parsing_history.pop();
@@ -761,10 +781,15 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForCommaOrEnd;
 					posLastSqrCloseBracket = ret.length - 1;
 					strPosLastSqrCloseBracket = i;
-				} else {
+				} else if (prev_char === ',') {
 					if (DEBUG) { console.log('unexpected bracket, must be extra comma 4'); }
 					ret = ret.substr(0, ret.length - 2);
 					state = lookingForCommaOrEnd;
+					i--;									// repeat
+				} else {
+					if (DEBUG) { console.log('unexpected bracket, must be missing bracket in past 2'); }
+					ret = ret.substr(0, ret.length - 2) + '[';
+					state = lookingForValueStart;
 					i--;									// repeat
 				}
 			} else if (c === '}') {
@@ -811,6 +836,7 @@ function fixIt(str, iter, maxIter) {
 				if (parsingANumber) {
 					parsingANumber = false;
 					strPosLastComma = i;
+					posLastComma = ret.length  - 1;
 					if (get_parsing() === ARRAY) {
 						state = lookingForValueStart;
 					} else {
@@ -860,7 +886,7 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForValueEnd;
 					skip = true;
 				} else {
-					if (DEBUG) { console.log('detected missing quotes on string in past', i, posNumberStart); }
+					if (DEBUG) { console.log('detected missing quotes on string in past'); }
 					parsingANumber = false;
 					ret = str.substring(0, strPosNumberStart) + '"';
 					state = lookingForValueEnd;
@@ -895,6 +921,7 @@ function fixIt(str, iter, maxIter) {
 					state = lookingForKeyStart;
 				} else {
 					strPosLastComma = i;
+					posLastComma = ret.length  - 1;
 					if (get_parsing() === ARRAY) {
 						state = lookingForValueStart;
 					} else {
@@ -923,7 +950,7 @@ function fixIt(str, iter, maxIter) {
 					i = strPostLastColon;
 					openCurlyBrackets++;
 				} else {
-					ret = ret.substring(0, posLastSqrCloseBracket + 1) + ']' + str.substring(strPosLastSqrCloseBracket + 1);
+					ret = ret.substring(0, posLastComma) + ']' + str.substring(strPosLastComma);
 					return fixIt(ret, iter, maxIter);				// I don't know what state we were in at this position, so repeat...
 				}
 			} else if (c === ']') {
@@ -955,13 +982,24 @@ function fixIt(str, iter, maxIter) {
 				if (DEBUG) { console.log('detected extra quote 1'); }
 				ret = ret.substr(0, ret.length - 2);
 				state = lookingForValueEnd;
-				i--;								// repeat
+				i--;									// repeat
 			}
 		}
 	}
 
+	// ----- ending soon ----- //
+	if (state === lookingForKeyEnd) {
+		if (DEBUG) { console.log('detected missing quote 10'); }
+		ret += '": ""';
+	}
+	if (state === lookingForValueEnd) {					// this is a theoretical/made up state, feel free to remove it
+		if (parsingANumber === false) {
+			if (DEBUG) { console.log('detected missing quote 11'); }
+			ret += '"';
+		}
+	}
 	balance_brackets();									// this is not the proper exit, if we made it here, missing closing curly bracket
-	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets); }
+	if (DEBUG) { console.log('unexpected done 3', openCurlyBrackets + '/' + openSqrBrackets, state); }
 	return ret;
 
 	function balance_brackets() {
