@@ -494,8 +494,30 @@ function fixIt(str, iter, maxIter) {
 // pretty print json
 function breakMeDown(orig_str, fixed_str) {
 	let ret = '';
-	const orig_lines = break_items(orig_str.replace(/[\t\n\r]/g, '').replace(/\s*([^"])/g, '$1').replace(/[{]\s+"/g, '{"'));
-	const fixed_lines = break_items(fixed_str.replace(/[\t\n\r]/g, '').replace(/\s*([^"])/g, '$1').replace(/[{]\s+"/g, '{"'));
+	let orig_lines = '';
+	let fixed_lines = '';
+
+	// one set of regex is better for stringified (1 line js) than the other
+	// first set
+	const og_break1 = break_items(orig_str.replace(/[\t\n\r]/g, '').replace(/\s*([^"])/g, '$1').replace(/[{]\s+"/g, '{"'));
+	const fixed_break1= break_items(fixed_str.replace(/[\t\n\r]/g, '').replace(/\s*([^"])/g, '$1').replace(/[{]\s+"/g, '{"'));
+
+	// second set
+	const og_break2 = break_items(orig_str.replace(/[\t]/g, '').replace(/[{]\s+"/g, '{"').replace(/[\[]\s+"/g, '["').replace(/" +/g, '"').replace(/ +"/g, '"'));
+	const fixed_break2 = break_items(fixed_str.replace(/[\t]/g, '').replace(/[{]\s+"/g, '{"').replace(/[\[]\s+"/g, '["').replace(/" +/g, '"').replace(/ +"/g, '"'));
+
+	console.log('1 line diffs', Math.abs(og_break1.length - fixed_break1.length));
+	console.log('2 line diffs', Math.abs(og_break2.length - fixed_break2.length));
+	if (Math.abs(og_break2.length - fixed_break2.length) <= Math.abs(og_break1.length - fixed_break1.length)) {
+		console.log('using regex set 2');
+		orig_lines = og_break2;
+		fixed_lines = fixed_break2;
+	} else {
+		console.log('using regex set 1');
+		orig_lines = og_break1;
+		fixed_lines = fixed_break1;
+	}
+
 	console.log(orig_lines);
 	console.log(fixed_lines);
 
@@ -503,8 +525,9 @@ function breakMeDown(orig_str, fixed_str) {
 	for (let i = 0; i < orig_lines.length; i++) {
 		if (orig_lines[x]) { orig_lines[i] = orig_lines[i].trim(); }
 		if (fixed_lines[x]) { fixed_lines[x] = fixed_lines[x].trim(); }
-		//if (orig_lines[i] === fixed_lines[x]) {
-		if (orig_lines[i].replace(/:\s+/g, ':') === fixed_lines[x].replace(/:\s+/g, ':')) {		// ignore space differences
+		if (!orig_lines[i].replace(/:\s+/g, ':').trim() || !fixed_lines[x]) {						// do not print blank lines
+			// nothing
+		} else if (orig_lines[i].replace(/:\s+/g, ':') === fixed_lines[x].replace(/:\s+/g, ':')) {	// ignore space differences, print same same lines
 			ret += '<sss>🗸 ' + orig_lines[i] + '</sss>\n';
 		} else {
 			const del = findDeletions(orig_lines[i], fixed_lines[x]);
@@ -534,6 +557,7 @@ function breakMeDown(orig_str, fixed_str) {
 		ret += '\n';
 		x++;
 	}
+	// dsh todo, if there are too many differences, just fix it? don't highlight differences...
 	return ret;
 }
 
@@ -560,17 +584,22 @@ function break_items(str) {
 		if (pos >= 0) {
 			const before = str.substring(0, pos);
 			const after = str.substring(pos);
-			ret.push(before);
+			if (before.trim()) {
+				ret.push(before);
+			}
 			str = after;
 		} else {
-			ret.push(str);
+			if (str.trim()) {
+				ret.push(str);
+			}
 			break;
 		}
 	}
 	return ret;
 
 	function indexOfThings(str) {
-		const split_on = ['",', 'false,', 'true,', 'null,', '},', '],'];
+		//const split_on = ['",', 'false,', 'true,', 'null,', '},', '],'];
+		const split_on = [',', '\n'];
 		let ret = -1;
 		for (let i in split_on) {
 			const thing = split_on[i];
@@ -597,7 +626,7 @@ function findAdditions(orig_line, fixed_line) {
 	fixed_line = fixed_line ? fixed_line : '';
 
 	for (let i = 0; i < fixed_line.length; i++) {
-		console.log(i, x, fixed_line[i], orig_line[x], ret, detectedDiff);
+		//console.log(i, x, fixed_line[i], orig_line[x], ret, detectedDiff);
 
 		if (fixed_line[i] === orig_line[x]) {
 			if (detectedDiff === true) {
@@ -662,7 +691,7 @@ function findDeletions(orig_line, fixed_line) {
 	fixed_line = fixed_line ? fixed_line : '';
 
 	for (let i = 0; i < orig_line.length; i++) {
-		console.log(i, x, orig_line[i], fixed_line[x], ret, detectedDiff);
+		//console.log(i, x, orig_line[i], fixed_line[x], ret, detectedDiff);
 
 		if (orig_line[i] === fixed_line[x]) {
 			if (detectedDiff === true) {
