@@ -1,8 +1,10 @@
 /* eslint no-bitwise: 0 */
 /* global formatDate, getThing, saveThing, LS_KEY_DATE, LS_KEY_TIME, LS_KEY_HEX, LS_KEY_OPEN, LS_KEY_FORGET, LS_KEY_TEXT, LS_KEY_ENDINGS */
-/* global formatDate, getThing, saveThing, EXPIRATION, FORMAT, ADD_SPACE_HEX, LINE_ENDING */
+/* global formatDate, getThing, saveThing, EXPIRATION, FORMAT, ADD_SPACE_HEX, LINE_ENDING, fixJson, breakMeDown */
 let auto_ts_units = true;
 let use_offset = true;
+let prev_text = '';
+let fixed_text = '';
 updateNow();
 listenHereSon();
 showUnits('ms');
@@ -165,17 +167,40 @@ function listenHereSon() {
 				document.querySelector('#inputText').innerHTML = unescapeIt(line_endings(textInput));
 			} else if (e.target.classList.contains('clear')) {
 				document.querySelector('#inputText').innerHTML = '';
+				document.querySelector('.accept').classList.add('hidden');
+				document.querySelector('.undo').classList.add('hidden');
 			} else if (e.target.classList.contains('js2json')) {
 				document.querySelector('#inputText').innerHTML = prettyPrint(js2json(line_endings(textInput)));
 			} else if (e.target.classList.contains('json2js')) {
 				document.querySelector('#inputText').innerHTML = json2js(line_endings(textInput));
-			}
-			else if (e.target.classList.contains('copy')) {
+			} else if (e.target.classList.contains('fixJson')) {
+				try {
+					document.querySelector('#inputText').innerHTML = prettyPrint(js2json(line_endings(textInput)));
+				} catch (e) {
+					prev_text = textInput;
+					fixed_text = fixJson(line_endings(textInput));
+					const fixed_obj = JSON.parse(fixed_text);								// test the fix
+					const diff = document.querySelector('#inputText').innerHTML = breakMeDown(prev_text, JSON.stringify(fixed_obj, null, 2));
+					document.querySelector('.accept').classList.remove('hidden');
+					document.querySelector('.undo').classList.remove('hidden');
+					document.querySelector('#inputText').innerHTML = diff;
+				}
+			} else if (e.target.classList.contains('undo')) {
+				document.querySelector('#inputText').innerHTML = prev_text;
+				document.querySelector('.accept').classList.add('hidden');
+				document.querySelector('.undo').classList.add('hidden');
+			} else if (e.target.classList.contains('accept')) {
+				document.querySelector('#inputText').innerHTML = prettyPrint(fixed_text);
+				document.querySelector('.accept').classList.add('hidden');
+				document.querySelector('.undo').classList.add('hidden');
+			} else if (e.target.classList.contains('stripHtml')) {
+				document.querySelector('#inputText').innerText = textInput;
+			} else if (e.target.classList.contains('copy')) {
 				document.querySelector('#inputText').classList.add('success');
 				copyTextButton(line_endings(textInput));
 				setTimeout(() => {
 					document.querySelector('#inputText').classList.remove('success');
-				}, 250);
+				}, 350);
 			}
 		} catch (e) {
 			console.error(e);

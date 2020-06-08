@@ -171,7 +171,7 @@ pre code, pre samp{
 }
 pre [contenteditable]:focus{
 	background:#EAF2F7;
-	transition: background-color 0.4s ease;
+	transition: background-color 0.25s ease;
 }
 pre b{							/*keyword*/
 	font-weight:normal;
@@ -223,8 +223,27 @@ pre strong, pre strong *, pre strong * *{	/*boolean*/
 #wordWrap{
 	vertical-align: middle;
 }
-.copy, .clear{
+.toolButton, .toolButton:nth-child(even), .toolButton:nth-child(odd){
 	background: #999;
+	border-radius: 0;
+	border: 0;
+	margin: 0 1px;
+	width: 90px;
+}
+.toolButton.accept{
+	background: #00BC38;
+}
+.toolButton.undo{
+	background: #e68;
+}
+.toolButton:hover{
+	background: #525252;
+}
+.toolButton.accept:hover{
+	background: #02972f;
+}
+.toolButton.undo:hover{
+	background: #d14467;
 }
 #copyIcon{
 	fill: #fff;
@@ -254,3 +273,30 @@ pre strong, pre strong *, pre strong * *{	/*boolean*/
 #scroll2top:hover{
 	color: #032F62;
 }
+
+
+/* edited line */
+pre edl{
+    background:#DDFFDD;
+}
+/* added character */
+pre edl dif{
+    background: #8e8;
+}
+
+pre edl, pre edl dif, pre ogl, pre ogl dif, pre sss{
+    /*padding: 5px 1px;*/
+    display: inline-block;
+    font-family: monospace;
+}
+
+/* original line */
+pre ogl{
+    background:#FFDDDD;
+}
+/* removed character */
+pre ogl dif{
+    background: #e68;
+}
+
+/* #FFAAAA */
