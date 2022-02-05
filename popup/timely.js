@@ -121,12 +121,11 @@ function listenHereSon() {
 
 	// json key locator events
 	document.getElementById('inputText').addEventListener('click', (e) => {
-		let depth = e.target.getAttribute('depth');
 		let key = e.target.innerText;
 		let location = e.target.getAttribute('loc');
-		console.log('clicked key:', key, 'depth:', depth, 'loc:', location);
-
 		if (location) {
+			console.log('[json] clicked key:', key, 'loc:', location);
+
 			document.querySelector('#jsonKeyLocation').innerText = location;
 			document.querySelector('#copyKeyIcon').classList.remove('hidden');
 			const keys = document.querySelectorAll('.selectedKey');
@@ -139,9 +138,15 @@ function listenHereSon() {
 			e.target.classList.add('selectedKey');						// color this key
 
 			let tmp = location;
-			for (let i = 0; i < location.split('.').length - 1; i++) {	// color parent keys
+			for (let i = 0; tmp.length > 0; i++) {						// color parent keys
 				const pos = tmp.lastIndexOf('.');
-				tmp = tmp.substring(0, pos);
+				const posBracket = tmp.lastIndexOf(']');
+				if (posBracket > pos) {									// if ] bracket is after dot then an array is next
+					const posBracket2 = tmp.lastIndexOf('[');
+					tmp = tmp.substring(0, posBracket2);
+				} else {
+					tmp = tmp.substring(0, pos);
+				}
 				try {
 					document.querySelector('[loc="' + tmp + '"]').classList.add('selectedKey');
 				} catch (e) { }
@@ -198,6 +203,7 @@ function listenHereSon() {
 				document.querySelector('#inputText').innerText = decodeChars(line_endings(textInput));
 			} else if (e.target.classList.contains('pretty')) {
 				document.querySelector('#inputText').innerHTML = prettyPrint(line_endings(textInput));
+				document.querySelector('#jsonKeyWrap').classList.remove('hidden');
 				let text = document.getElementById('inputText').innerText;
 				if (text.indexOf('%3C') >= 0) {
 					document.querySelector('#inputText').innerText = urlDecode(text);
@@ -226,6 +232,7 @@ function listenHereSon() {
 				document.querySelector('.undo').classList.add('hidden');
 			} else if (e.target.classList.contains('js2json')) {
 				document.querySelector('#inputText').innerHTML = prettyPrint(js2json(line_endings(textInput)));
+				document.querySelector('#jsonKeyWrap').classList.remove('hidden');
 			} else if (e.target.classList.contains('json2js')) {
 				document.querySelector('#inputText').innerHTML = json2js(line_endings(textInput));
 			} else if (e.target.classList.contains('fixJson')) {
@@ -260,6 +267,8 @@ function listenHereSon() {
 		} catch (e) {
 			console.error(e);
 			document.querySelector('#inputText').classList.add('jsonError');
+			document.querySelector('#jsonKeyLocation').innerText = '-- click a key to locate it --';
+			document.querySelector('#jsonKeyWrap').classList.add('hidden');
 		}
 		countText();
 		saveThing(LS_KEY_TEXT, document.getElementById('inputText').innerText, true);
@@ -473,11 +482,10 @@ function urlDecode(text) {
 }
 
 // pretty print json
-function stringMeUp(json, spacing, depth, loc) {
+function stringMeUp(json, spacing, loc) {
 	let ret = '{\n';
 	let keyNum = 0;										// starts from 0 on each recursion call
 	spacing = (spacing) ? spacing + '\t' : '\t';
-	depth = depth ? depth : 1;							// depth increase even across recursion calls
 	loc = loc ? loc : '';
 
 	if (json === null || typeof json !== 'object') {
@@ -490,11 +498,10 @@ function stringMeUp(json, spacing, depth, loc) {
 		} else {
 			for (let key in json) {
 				keyNum++;
-				depth++;
 				const s_key = makeSafe(key);
 				const s_value = makeSafe(json[key]);
 				let my_loc = loc + '.' + key;
-				let attrs = 'depth="' + depth + '" loc="' + my_loc.substring(1) + '"';
+				let attrs = 'loc="' + my_loc.substring(1) + '"';
 
 				if (typeof json[key] === 'string') {										// she's a string
 					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": "<u>' + s_value + '</u>"';
@@ -505,7 +512,7 @@ function stringMeUp(json, spacing, depth, loc) {
 				} else if (json[key] === null) {											// she's tricky
 					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": <i>null</i>';
 				} else if (typeof json[key] === 'object' && !Array.isArray(json[key])) {	// she's an object
-					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": ' + stringMeUp(json[key], spacing, depth, loc + '.' + key);
+					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": ' + stringMeUp(json[key], spacing, loc + '.' + key);
 				} else if (Array.isArray(json[key])) {										// she's an array
 					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": [\n';
 					ret += arrayParsing(json[key], spacing, loc + '.' + key);
@@ -545,7 +552,7 @@ function stringMeUp(json, spacing, depth, loc) {
 			} else if (arr[i] === null) {										// he's null
 				ret += spacing + '<i ' + attrs + '>null</i>';
 			} else if (typeof arr[i] === 'object' && !Array.isArray(arr[i])) {	// he's an object
-				ret += spacing + stringMeUp(arr[i], spacing, depth, my_loc);
+				ret += spacing + stringMeUp(arr[i], spacing, my_loc);
 			} else if (Array.isArray(arr[i])) {									// he's an array
 				ret += spacing + '[\n';
 				ret += arrayParsing(arr[i], spacing, my_loc);

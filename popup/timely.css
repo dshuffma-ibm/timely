@@ -35,7 +35,7 @@ button{
 	border: 0;
 	border-radius: 2px;
 	vertical-align: top;
-	transition: ease 0.5s;
+	transition: ease 0.25s;
 }
 button:hover{
 	background: #525252;
@@ -111,6 +111,7 @@ button:hover{
 	margin: 0;
 	padding: 0;
 	font-size: 12px;
+	max-width: 800px;
 }
 .divider{
 	border: 0;
@@ -123,7 +124,7 @@ button:hover{
 .formatButton{
 	margin: 0;
 	padding: 4px 2px;
-	width: 115px;
+	width: 120px;
 	margin-bottom: 4px;
 	background: #AEC8E8;
 	vertical-align: middle;
@@ -158,9 +159,11 @@ pre, pre code, pre samp{
 	caret-color: #000066;
 	transition: 0.4s;
 }
+pre code{
+	padding: 4px;
+}
 pre code, pre samp{
 	width: calc(100% - 10px);
-	min-height: 22px;
 	-moz-tab-size:2;
 	-o-tab-size:2;
 	tab-size:2;
@@ -226,7 +229,7 @@ pre strong, pre strong *, pre strong * *{	/*boolean*/
 	background: #999;
 	border: 0;
 	margin: 0 1px;
-	width: 112px;
+	width: 117px;
 }
 .toolButton.accept{
 	background: #00BC38;
@@ -252,7 +255,7 @@ pre strong, pre strong *, pre strong * *{	/*boolean*/
 }
 #timestampWrap, #copyKeyIcon{
 	cursor: pointer;
-	transition: ease 0.5s;
+	transition: ease 0.25s;
 }
 
 #scroll2top{
@@ -303,6 +306,7 @@ pre ogl dif{
 	padding: 2px;
 	margin: 0;
 	word-wrap: break-word;
+	transition: ease 0.25s;
 }
 #jsonKeyLocation{
 	color: #00bc38;
