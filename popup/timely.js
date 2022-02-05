@@ -5,10 +5,25 @@ let auto_ts_units = true;
 let use_offset = true;
 let prev_text = '';
 let fixed_text = '';
+
+console.clear();
+console.log('[start] starting timely...');
+
 updateNow();
 listenHereSon();
 showUnits('ms');
 updateOffsetText();
+
+// -------------------------------------------------------------
+// when debugging uncomment this block
+/*let textInput = document.getElementById('inputText').innerText;
+document.querySelector('#inputText').innerHTML = prettyPrint(line_endings(textInput));
+let text = document.getElementById('inputText').innerText;
+if (text.indexOf('%3C') >= 0) {
+	document.querySelector('#inputText').innerText = urlDecode(text);
+}
+openTextFormatter();*/
+// -------------------------------------------------------------
 
 getThing(LS_KEY_DATE, (fmt) => {
 	if (fmt) {
@@ -104,8 +119,48 @@ function listenHereSon() {
 		}
 	});
 
-	document.addEventListener('click', (e) => {
+	// json key locator events
+	document.getElementById('inputText').addEventListener('click', (e) => {
+		let depth = e.target.getAttribute('depth');
+		let key = e.target.innerText;
+		let location = e.target.getAttribute('loc');
+		console.log('clicked key:', key, 'depth:', depth, 'loc:', location);
 
+		if (location) {
+			document.querySelector('#jsonKeyLocation').innerText = location;
+			document.querySelector('#copyKeyIcon').classList.remove('hidden');
+			const keys = document.querySelectorAll('.selectedKey');
+			for (let i in keys) {
+				if (keys[i] && keys[i].classList) {
+					keys[i].classList.remove('selectedKey');			// remove prev selected keys classes
+				}
+			}
+
+			e.target.classList.add('selectedKey');						// color this key
+
+			let tmp = location;
+			for (let i = 0; i < location.split('.').length - 1; i++) {	// color parent keys
+				const pos = tmp.lastIndexOf('.');
+				tmp = tmp.substring(0, pos);
+				try {
+					document.querySelector('[loc="' + tmp + '"]').classList.add('selectedKey');
+				} catch (e) { }
+			}
+		}
+	});
+
+	// toggle auto/sec units button
+	document.querySelector('#copyKeyIcon').addEventListener('click', (e) => {
+		console.log('[button] clicked to copy json key location');
+		copyTextButton(document.querySelector('#jsonKeyLocation').innerText);
+		document.querySelector('#jsonKeyWrap').classList.add('success');
+		setTimeout(() => {
+			document.querySelector('#jsonKeyWrap').classList.remove('success');
+		}, 200);
+	});
+
+	// most buttons here
+	document.addEventListener('click', (e) => {
 		// toggle auto/sec units button
 		if (e.target.id === 'unitsButton') {
 			console.log('[button] clicked the change units button');
@@ -418,39 +473,44 @@ function urlDecode(text) {
 }
 
 // pretty print json
-function stringMeUp(json, spacing) {
+function stringMeUp(json, spacing, depth, loc) {
 	let ret = '{\n';
-	let keyNum = 0;
+	let keyNum = 0;										// starts from 0 on each recursion call
 	spacing = (spacing) ? spacing + '\t' : '\t';
+	depth = depth ? depth : 1;							// depth increase even across recursion calls
+	loc = loc ? loc : '';
 
 	if (json === null || typeof json !== 'object') {
 		return '<u>' + JSON.stringify(json, null, '\t') + '</u>';
 	} else {
 		if (Array.isArray(json)) {
 			ret = '[\n';
-			ret += arrayParsing(json, spacing);
+			ret += arrayParsing(json, spacing, '.' + loc);
 			return ret;
 		} else {
 			for (let key in json) {
 				keyNum++;
+				depth++;
 				const s_key = makeSafe(key);
 				const s_value = makeSafe(json[key]);
+				let my_loc = loc + '.' + key;
+				let attrs = 'depth="' + depth + '" loc="' + my_loc.substring(1) + '"';
+
 				if (typeof json[key] === 'string') {										// she's a string
-					ret += spacing + '"<b>' + s_key + '</b>": "<u>' + s_value + '</u>"';
+					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": "<u>' + s_value + '</u>"';
 				} else if (typeof json[key] === 'number') {									// she's a number
-					ret += spacing + '"<b>' + s_key + '</b>": <i>' + s_value + '</i>';
+					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": <i>' + s_value + '</i>';
 				} else if (typeof json[key] === 'boolean') {								// she's a liar
-					ret += spacing + '"<b>' + s_key + '</b>": <strong>' + s_value + '</strong>';
+					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": <strong>' + s_value + '</strong>';
 				} else if (json[key] === null) {											// she's tricky
-					ret += spacing + '"<b>' + s_key + '</b>": <i>null</i>';
+					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": <i>null</i>';
 				} else if (typeof json[key] === 'object' && !Array.isArray(json[key])) {	// she's an object
-					ret += spacing + '"<b>' + s_key + '</b>": ' + stringMeUp(json[key], spacing);
+					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": ' + stringMeUp(json[key], spacing, depth, loc + '.' + key);
 				} else if (Array.isArray(json[key])) {										// she's an array
-					ret += spacing + '"<b>' + s_key + '</b>": [\n';
-					ret += arrayParsing(json[key], spacing);
+					ret += spacing + '"<b ' + attrs + '>' + s_key + '</b>": [\n';
+					ret += arrayParsing(json[key], spacing, loc + '.' + key);
 				} else {
-					console.log('what the hell is this', typeof json[key], json[key]);
-					ret += spacing + '"<b>' + s_key + '</b>": ' + JSON.stringify(json[key], null, '\t');
+					console.error('what the hell is this', typeof json[key], json[key]);
 				}
 
 				if (keyNum < Object.keys(json).length) {				// last one does not get a comma
@@ -464,27 +524,31 @@ function stringMeUp(json, spacing) {
 	return ret + spacing.slice(0, -1) + '}';
 
 	// arrays
-	function arrayParsing(arr, spacing) {
+	function arrayParsing(arr, spacing, loc) {
 		let ret = '';
 		let arrayPos = 0;
 		spacing += '\t';
+		loc += '[';
 
 		for (let i in arr) {
 			arrayPos++;
+			let my_loc = loc + i + ']';
+			let attrs = ' loc="' + my_loc.substring(1) + '"';
+
 			const s_value = makeSafe(arr[i]);
 			if (typeof arr[i] === 'string') {									// he's a string
-				ret += spacing + '"<u>' + s_value + '</u>"';
+				ret += spacing + '"<u ' + attrs + '>' + s_value + '</u>"';
 			} else if (typeof arr[i] === 'number') {							// he's a number
-				ret += spacing + '<i>' + s_value + '</i>';
+				ret += spacing + '<i ' + attrs + '>' + s_value + '</i>';
 			} else if (typeof arr[i] === 'boolean') {							// he's a boolean
-				ret += spacing + '<strong>' + s_value + '</strong>';
+				ret += spacing + '<strong ' + attrs + '>' + s_value + '</strong>';
 			} else if (arr[i] === null) {										// he's null
-				ret += spacing + '<i>null</i>';
+				ret += spacing + '<i ' + attrs + '>null</i>';
 			} else if (typeof arr[i] === 'object' && !Array.isArray(arr[i])) {	// he's an object
-				ret += spacing + stringMeUp(arr[i], spacing);
+				ret += spacing + stringMeUp(arr[i], spacing, depth, my_loc);
 			} else if (Array.isArray(arr[i])) {									// he's an array
 				ret += spacing + '[\n';
-				ret += arrayParsing(arr[i], spacing);
+				ret += arrayParsing(arr[i], spacing, my_loc);
 			}
 			if (arrayPos < arr.length) {						// last one does not get a comma
 				ret += ',\n';

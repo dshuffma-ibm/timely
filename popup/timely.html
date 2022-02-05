@@ -51,8 +51,8 @@
 		<div id="textPanel" class="hidden">
 			<hr class="divider"></hr>
 			<div id="buttonWrap">
-				<button class="formatButton encode64" type="button" title="Encode string to base 64">Encode B64</button>
-				<button class="formatButton decode64" type="button" title="Decode string from base 64">Decode B64</button>
+				<button class="formatButton encode64" type="button" title="Encode string to base 64">Encode Base64</button>
+				<button class="formatButton decode64" type="button" title="Decode string from base 64">Decode Base64</button>
 				<button class="formatButton encodeTxt" type="button" title="Encode line feed and similar characters">Encode LF</button>
 				<button class="formatButton decodeTxt" type="button" title="Decode line feed and similar characters">Decode LF</button>
 				<button class="formatButton pretty" type="button" title="Stringify JSON with white space">Stringify Pretty</button>
@@ -69,15 +69,22 @@
 				<button class="formatButton json2js" type="button" title="Convert JSON to a less formal JS object">JSON To JS</button>
 				<button class="formatButton fixJson" type="button" title="[Experimental] Try to fix invalid JSON. No refunds. Good luck.">Fix JSON</button>
 				<button class="formatButton stripHtml" type="button" title="Remove rich text formatting (styling)">Strip Rich Text</button>
-				<div style="text-align: right; margin-right: 18px;">
+				<div style="text-align: right; margin-right: 7px;">
 					<button class="formatButton accept toolButton hidden" type="button" title="Wow! it worked? Accept the green text.">Accept</button>
 					<button class="formatButton undo toolButton hidden" type="button" title="Revert the change">Undo</button>
 					<button class="formatButton clear toolButton" type="button" title="Clear the text area">Clear</button>
 					<button class="formatButton copy toolButton" type="button" id="copyButton" title="Copy textarea to clipboard">
-						<svg id="copyIcon" title="Copy Text" aria-hidden="true" data-prefix="fas" data-icon="copy" class="svg-inline--fa fa-copy fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"></path></svg> Copy
+						<svg id="copyIcon" title="Copy Text" aria-hidden="true" data-prefix="fas" data-icon="copy" class="svg-inline--fa fa-copy fa-w-14 copy" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+							<path class="copy" fill="currentColor" d="M320 448v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24V120c0-13.255 10.745-24 24-24h72v296c0 30.879 25.121 56 56 56h168zm0-344V0H152c-13.255 0-24 10.745-24 24v368c0 13.255 10.745 24 24 24h272c13.255 0 24-10.745 24-24V128H344c-13.2 0-24-10.8-24-24zm120.971-31.029L375.029 7.029A24 24 0 0 0 358.059 0H352v96h96v-6.059a24 24 0 0 0-7.029-16.97z"></path>
+						</svg> Copy
 					</button>
 				</div>
 				<div>
+					<p id="jsonKeyWrap">
+						JSON Key Location:
+						<span id="jsonKeyLocation">-- click a key to locate it --</span>
+						<svg id="copyKeyIcon" class="hidden" aria-hidden="true" data-prefix="far" data-icon="copy" class="svg-inline--fa fa-copy fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M433.941 65.941l-51.882-51.882A48 48 0 0 0 348.118 0H176c-26.51 0-48 21.49-48 48v48H48c-26.51 0-48 21.49-48 48v320c0 26.51 21.49 48 48 48h224c26.51 0 48-21.49 48-48v-48h80c26.51 0 48-21.49 48-48V99.882a48 48 0 0 0-14.059-33.941zM266 464H54a6 6 0 0 1-6-6V150a6 6 0 0 1 6-6h74v224c0 26.51 21.49 48 48 48h96v42a6 6 0 0 1-6 6zm128-96H182a6 6 0 0 1-6-6V54a6 6 0 0 1 6-6h106v88c0 13.255 10.745 24 24 24h88v202a6 6 0 0 1-6 6zm6-256h-64V48h9.632c1.591 0 3.117.632 4.243 1.757l48.368 48.368a6 6 0 0 1 1.757 4.243V112z"></path></svg>
+					</p>
 					<label id="wordWrapWrap" class="wwClick">
 						<input type="checkbox" checked="checked" id="wordWrap" class="wwClick"/>
 						word wrap

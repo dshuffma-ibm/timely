@@ -1,5 +1,4 @@
 html, body {
-	width: 445px;
 	color: #525252;
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	padding: 0;
@@ -75,14 +74,14 @@ button:hover{
 	display: inline-block;
 }
 #inputTs{
-	width: 240px;
+	width: calc(100% - 187px);
 	margin-bottom: 4px;
 }
 .error{
 	color: #B84F2B;
 }
 #unitsButton{
-	width: 85px;
+	width: 95px;
 	border-left: 5px #00BC38 solid;
 	margin-left: 5px;
 }
@@ -116,7 +115,7 @@ button:hover{
 .divider{
 	border: 0;
 	border-top: 2px #C0D3EB solid;
-	width: 407px;
+	width: 100%;
 	float: left;
 	margin-top: 0;
 	margin-bottom: 12px;
@@ -124,7 +123,7 @@ button:hover{
 .formatButton{
 	margin: 0;
 	padding: 4px 2px;
-	width: 100px;
+	width: 115px;
 	margin-bottom: 4px;
 	background: #AEC8E8;
 	vertical-align: middle;
@@ -146,7 +145,7 @@ pre{
 	border-radius:2px;
 	color:#032F62;
 	background: #F6F8FA;
-	width: 408px;
+	width: calc(100% - 9px);
 }
 pre, pre code, pre samp{
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -155,7 +154,7 @@ pre, pre code, pre samp{
 	display:block;
 	margin:0;
 	cursor:text;
-	line-height: 1.6em;
+	line-height: 1.2em;
 	caret-color: #000066;
 	transition: 0.4s;
 }
@@ -225,10 +224,9 @@ pre strong, pre strong *, pre strong * *{	/*boolean*/
 }
 .toolButton, .toolButton:nth-child(even), .toolButton:nth-child(odd){
 	background: #999;
-	border-radius: 0;
 	border: 0;
 	margin: 0 1px;
-	width: 90px;
+	width: 112px;
 }
 .toolButton.accept{
 	background: #00BC38;
@@ -249,10 +247,10 @@ pre strong, pre strong *, pre strong * *{	/*boolean*/
 	fill: #fff;
 	width: 10px;
 }
-#copyTsIcon{
+#copyTsIcon, #copyKeyIcon{
 	width: 10px;
 }
-#timestampWrap{
+#timestampWrap, #copyKeyIcon{
 	cursor: pointer;
 	transition: ease 0.5s;
 }
@@ -300,3 +298,16 @@ pre ogl dif{
 }
 
 /* #FFAAAA */
+
+#jsonKeyWrap{
+	padding: 2px;
+	margin: 0;
+	word-wrap: break-word;
+}
+#jsonKeyLocation{
+	color: #00bc38;
+}
+.selectedKey{
+	color: #00b7ff;
+	text-decoration: underline;
+}
