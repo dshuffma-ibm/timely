@@ -22,10 +22,3 @@ Save time with Timely.
 5. Click the "Copy" button to load the text into your clipboard
 
 ![](timely.png)
-
->
-	"applications": {
-		"gecko": {
-			"id": "addon2@example.com"
-		}
-	}

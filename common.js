@@ -17,16 +17,18 @@ const LS_KEY_ENDINGS = 'lineEndings';
 // save something to the local storage
 function saveThing(item, value, expires) {
 	try {
-		const obj = {};
-		const data = {
-			value: value,
-		};
-		if (expires === true) {
-			data.expires = Date.now() + EXPIRATION;
+		if (browser) {
+			const obj = {};
+			const data = {
+				value: value,
+			};
+			if (expires === true) {
+				data.expires = Date.now() + EXPIRATION;
+			}
+			obj[item] = JSON.stringify(data);
+			browser.storage.sync.set(obj);
+			console.log('[settings] saved setting', item, obj);
 		}
-		obj[item] = JSON.stringify(data);
-		browser.storage.sync.set(obj);
-		console.log('[settings] saved setting', item, obj);
 	} catch (e) {
 		console.error('[settings] could not save item', item, e);
 	}
@@ -34,35 +36,37 @@ function saveThing(item, value, expires) {
 
 // get a local storage item
 function getThing(item, cb) {
-	browser.storage.sync.get(item).then(function (storage) {
-		if (!storage || storage[item] === undefined) {
-			console.error('1 - item dne', item);
-			cb(null);
-		} else {
-			let data = null;
-			try {
-				data = JSON.parse(storage[item]);
-			} catch (e) {
-				console.error('cannot parse item', item, storage[item]);
-			}
-			if (!data) {
-				console.error('2 - item dne', item);
+	if (browser) {
+		browser.storage.sync.get(item).then(function (storage) {
+			if (!storage || storage[item] === undefined) {
+				console.error('1 - item dne', item);
 				cb(null);
-			} else if (!data.expires) {
-				//console.log('1 - got item', item, storage[item]);
-				cb(data.value);
 			} else {
-				const time_left = data.expires - Date.now();
-				if (isNaN(data.expires) || time_left <= 0) {
-					//console.log('its expired', item);
+				let data = null;
+				try {
+					data = JSON.parse(storage[item]);
+				} catch (e) {
+					console.error('cannot parse item', item, storage[item]);
+				}
+				if (!data) {
+					console.error('2 - item dne', item);
 					cb(null);
-				} else {
-					//console.log('2 - got item', item, storage[item]);
+				} else if (!data.expires) {
+					//console.log('1 - got item', item, storage[item]);
 					cb(data.value);
+				} else {
+					const time_left = data.expires - Date.now();
+					if (isNaN(data.expires) || time_left <= 0) {
+						//console.log('its expired', item);
+						cb(null);
+					} else {
+						//console.log('2 - got item', item, storage[item]);
+						cb(data.value);
+					}
 				}
 			}
-		}
-	});
+		});
+	}
 }
 
 // update the example text box

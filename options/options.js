@@ -42,7 +42,7 @@ getThing(LS_KEY_HEX, (hexSetting) => {
 // load auto open setting
 getThing(LS_KEY_OPEN, (autoOpen) => {
 	if (autoOpen === undefined || autoOpen === null) {
-		document.getElementById('autoOpen').checked = false;			// default
+		document.getElementById('autoOpen').checked = true;				// default
 	} else {
 		document.getElementById('autoOpen').checked = autoOpen;
 	}
