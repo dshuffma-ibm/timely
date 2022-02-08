@@ -1,108 +1,127 @@
 /* eslint no-bitwise: 0 */
 /* global formatDate, getThing, saveThing, LS_KEY_DATE, LS_KEY_TIME, LS_KEY_HEX, LS_KEY_OPEN, LS_KEY_FORGET, LS_KEY_TEXT, LS_KEY_ENDINGS */
 /* global formatDate, getThing, saveThing, EXPIRATION, FORMAT, ADD_SPACE_HEX, LINE_ENDING, fixJson, breakMeDown */
+
+
+let ASN1 = null;
+let Base64 = null;
+let Hex = null;
+
+(typeof define != 'undefined' ? define : function (factory) {
+	'use strict';
+	if (typeof module == 'object') module.exports = factory(function (name) { return require(name); });
+	else window.asn1 = factory(function (name) { return window[name.substring(2)]; });
+})(function (require) {
+	"use strict";
+
+	ASN1 = require('./asn1');
+	Base64 = require('./base64');
+	Hex = require('./hex');
+});
+
 let auto_ts_units = true;
 let use_offset = true;
 let prev_text = '';
 let fixed_text = '';
 
-console.clear();
-console.log('[start] starting timely...');
+if (!window.testing) {
+	console.log('[start] starting timely...');
+	updateNow();
+	listenHereSon();
+	showUnits('ms');
+	updateOffsetText();
 
-updateNow();
-listenHereSon();
-showUnits('ms');
-updateOffsetText();
-
-// -------------------------------------------------------------
-// when debugging uncomment this block
-/*let textInput = document.getElementById('inputText').innerText;
-document.querySelector('#inputText').innerHTML = prettyPrint(line_endings(textInput));
-let text = document.getElementById('inputText').innerText;
-if (text.indexOf('%3C') >= 0) {
-	document.querySelector('#inputText').innerText = urlDecode(text);
-}
-openTextFormatter();*/
-// -------------------------------------------------------------
-
-getThing(LS_KEY_DATE, (fmt) => {
-	if (fmt) {
-		FORMAT = fmt;
+	// -------------------------------------------------------------
+	// when debugging uncomment this block
+	/*let textInput = document.getElementById('inputText').innerText;
+	document.querySelector('#inputText').innerHTML = prettyPrint(line_endings(textInput));
+	let text = document.getElementById('inputText').innerText;
+	if (text.indexOf('%3C') >= 0) {
+		document.querySelector('#inputText').innerText = urlDecode(text);
 	}
-	console.log('[settings] date format setting', FORMAT);
-});
+	openTextFormatter();*/
 
-getThing(LS_KEY_HEX, (setting) => {
-	if (setting !== undefined && setting !== null) {
-		ADD_SPACE_HEX = setting;
-	}
-	console.log('[settings] hex space setting', ADD_SPACE_HEX);
-});
+	// -------------------------------------------------------------
 
-getThing(LS_KEY_FORGET, (forgetSetting) => {
-	if (forgetSetting === 'onclose') {
-		EXPIRATION = 0;
-	}
-	if (forgetSetting === 'minutes') {
-		EXPIRATION = 1000 * 60 * 5;
-	}
-	if (forgetSetting === 'forever') {
-		EXPIRATION = Date.now() * 2;		// any distance future timestamp
-	}
-	console.log('[settings] forget expiration setting', EXPIRATION);
-});
-
-getThing(LS_KEY_OPEN, (autoOpen) => {
-	if (autoOpen === true) {
-		console.log('[auto-open] opening text formatter panel');
-		openTextFormatter();
-	}
-	console.log('[settings] hex space setting', autoOpen);
-});
-
-// retrieve past input text if available
-getThing(LS_KEY_TEXT, (text) => {
-	if (text !== undefined) {
-		console.log('[text] loading input text');
-		document.getElementById('inputText').innerText = text;
-	}
-});
-
-// retrieve past input timestamp if available
-getThing(LS_KEY_TIME, (timestamp) => {
-	if (timestamp !== undefined) {
-		console.log('[text] loading input text');
-		document.getElementById('inputTs').value = timestamp;
-	}
-});
-
-// retrieve line endings setting
-getThing(LS_KEY_ENDINGS, (lineEndings) => {
-	if (lineEndings !== undefined) {
-		console.log('[settings] loading line endings');
-		LINE_ENDING = lineEndings;
-	}
-});
-
-// update everything all the time
-setInterval(function () {
-	try {
-		convert4humans();
-		updateNow();
-
-		// hide or show the scroll to top button
-		const top = document.getElementById('htmlId').scrollTop;
-		if (top >= 120) {
-			document.querySelector('#scroll2top').classList.remove('hidden');
-		} else {
-			document.querySelector('#scroll2top').classList.add('hidden');
+	getThing(LS_KEY_DATE, (fmt) => {
+		if (fmt) {
+			FORMAT = fmt;
 		}
-	} catch (e) {
-		console.error(e);
-	}
-}, 300);
+		console.log('[settings] date format setting', FORMAT);
+	});
 
-document.getElementById('inputTs').focus();
+	getThing(LS_KEY_HEX, (setting) => {
+		if (setting !== undefined && setting !== null) {
+			ADD_SPACE_HEX = setting;
+		}
+		console.log('[settings] hex space setting', ADD_SPACE_HEX);
+	});
+
+	getThing(LS_KEY_FORGET, (forgetSetting) => {
+		if (forgetSetting === 'onclose') {
+			EXPIRATION = 0;
+		}
+		if (forgetSetting === 'minutes') {
+			EXPIRATION = 1000 * 60 * 5;
+		}
+		if (forgetSetting === 'forever') {
+			EXPIRATION = Date.now() * 2;		// any distance future timestamp
+		}
+		console.log('[settings] forget expiration setting', EXPIRATION);
+	});
+
+	getThing(LS_KEY_OPEN, (autoOpen) => {
+		if (autoOpen === true) {
+			console.log('[auto-open] opening text formatter panel');
+			openTextFormatter();
+		}
+		console.log('[settings] hex space setting', autoOpen);
+	});
+
+	// retrieve past input text if available
+	getThing(LS_KEY_TEXT, (text) => {
+		if (text !== undefined) {
+			console.log('[text] loading input text');
+			document.getElementById('inputText').innerText = text;
+		}
+	});
+
+	// retrieve past input timestamp if available
+	getThing(LS_KEY_TIME, (timestamp) => {
+		if (timestamp !== undefined) {
+			console.log('[text] loading input text');
+			document.getElementById('inputTs').value = timestamp;
+		}
+	});
+
+	// retrieve line endings setting
+	getThing(LS_KEY_ENDINGS, (lineEndings) => {
+		if (lineEndings !== undefined) {
+			console.log('[settings] loading line endings');
+			LINE_ENDING = lineEndings;
+		}
+	});
+
+	// update everything all the time
+	setInterval(function () {
+		try {
+			convert4humans();
+			updateNow();
+
+			// hide or show the scroll to top button
+			const top = document.getElementById('htmlId').scrollTop;
+			if (top >= 120) {
+				document.querySelector('#scroll2top').classList.remove('hidden');
+			} else {
+				document.querySelector('#scroll2top').classList.add('hidden');
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	}, 300);
+
+	document.getElementById('inputTs').focus();
+}
 
 // listen for click and keyboard events
 function listenHereSon() {
@@ -121,9 +140,9 @@ function listenHereSon() {
 
 	// json key locator events
 	document.getElementById('inputText').addEventListener('click', (e) => {
-		let key = e.target.innerText;
 		let location = e.target.getAttribute('loc');
 		if (location) {
+			let key = e.target.innerText;
 			console.log('[json] clicked key:', key, 'loc:', location);
 
 			document.querySelector('#jsonKeyLocation').innerText = location;
@@ -235,6 +254,8 @@ function listenHereSon() {
 				document.querySelector('#jsonKeyWrap').classList.remove('hidden');
 			} else if (e.target.classList.contains('json2js')) {
 				document.querySelector('#inputText').innerHTML = json2js(line_endings(textInput));
+			} else if (e.target.classList.contains('asn1')) {
+				document.querySelector('#inputText').innerHTML = decodeAsn1(line_endings(textInput));
 			} else if (e.target.classList.contains('fixJson')) {
 				try {
 					document.querySelector('#inputText').innerHTML = prettyPrint(js2json(line_endings(textInput)));
@@ -760,3 +781,41 @@ function json2js(str) {
 	// put quotes around white space and dashes, could be multiple dashes in a key...
 	return str.replace(/\s*(.+-.+)\s*:/g, '\n\'$1\':').replace(/(\w+\s+\w+)\s*:/g, '\'$1\':');
 }
+
+
+function decodeAsn1(str) {
+	//console.log('str', str);
+	// dsh todo parse prev comments and update them instead of removing them....
+
+	let der = Base64.unarmor(str);
+	let offset = 0;
+	let asn1 = ASN1.decode(der, offset);
+	//console.log('asn1 str', asn1.toPrettyString());
+	//console.log('asn1 obj', JSON.stringify(asn1.toObj(), null, 2));
+	const cert = asn1.toCertObj();
+	//console.log('asn1 cert obj!!', JSON.stringify(cert, null, 2));
+
+	return makePemComments(cert) + '\n' + str;
+}
+
+// format cert array details into pem comments
+function makePemComments(arr) {
+	let str = '';
+	for (let i in arr) {
+		if (arr[i][0] && arr[i][1]) {
+			if (typeof arr[i][1] === 'string' && arr[i][1].length <= 256) {		// skip huge hex things, not very helpful to me
+				str += `\n# ${arr[i][0]}:`;			// field name
+				if (!Array.isArray(arr[i][1])) {
+					str += ` ${arr[i][1]}`;			// 1 value
+				} else {
+					for (let x in arr[i][1]) {
+						str += `, ${arr[i][1][x]}`	// many values
+					}
+				}
+			}
+		}
+	}
+	return str;
+}
+
+// about:certificate?cert=MIIFOjCCBCKgAwIBAgISBCdVASalHOGJqcxB%2FPyuLfhVMA0GCSqGSIb3DQEBCwUAMDIxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQDEwJSMzAeFw0yMTEyMjAxMDUzNDVaFw0yMjAzMjAxMDUzNDRaMB0xGzAZBgNVBAMTEnd3dy5zc2xzaG9wcGVyLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOeUPEKWMtfvATZk40OwJ%2FFR1YQtvwQhWACVG7Kd7HiGdDDF4cF0qCnd6hSqwAm2c6g%2BfTgsU44uRXwO09s99sk9jCpHrCERA3Ii2OzCaB%2F8nCHzykFdvHbsrzQoyDQRJTjkgnnNl%2FSMyoTQs3iAC60Jctx2W7U%2B2ERP9wB39dw%2Fhn7ULYeNGHuI%2BoFTmEfK%2BFznApHycYks0eN4oe8bMsVsv5vdsOFdi0JlYogPWwROZDws1m4v0Hb00xPUhmKXrjhdV7MZVRFsxR25ZaOWYfFl6sUuiAdEeZbojvKo20qBW9u%2FxGyJWAX8IvCMukpD%2BZTLR9LbHhC%2Fq21bCOCRusECAwEAAaOCAl0wggJZMA4GA1UdDwEB%2FwQEAwIFoDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH%2FBAIwADAdBgNVHQ4EFgQU8%2FYpW7l2tkkMlTObbLmehFSPupYwHwYDVR0jBBgwFoAUFC6zF7dYVsuuUAlA5h%2BvnYsUwsYwVQYIKwYBBQUHAQEESTBHMCEGCCsGAQUFBzABhhVodHRwOi8vcjMuby5sZW5jci5vcmcwIgYIKwYBBQUHMAKGFmh0dHA6Ly9yMy5pLmxlbmNyLm9yZy8wLQYDVR0RBCYwJIIOc3Nsc2hvcHBlci5jb22CEnd3dy5zc2xzaG9wcGVyLmNvbTBMBgNVHSAERTBDMAgGBmeBDAECATA3BgsrBgEEAYLfEwEBATAoMCYGCCsGAQUFBwIBFhpodHRwOi8vY3BzLmxldHNlbmNyeXB0Lm9yZzCCAQQGCisGAQQB1nkCBAIEgfUEgfIA8AB2AG9Tdqwx8DEZ2JkApFEV%2F3cVHBHZAsEAKQaNsgiaN9kTAAABfdewxUcAAAQDAEcwRQIhAPAWpnoO8teE%2FUeWRPOEtjQZzYVJR91Jm5SPgqM4duRtAiAeUDKCyM4ZQiKBbQZdzAHgtYYagcdPIuLV4aRkgksocQB2AEalVet1%2BpEgMLWiiWn0830RLEF0vv1JuIWr8vxw%2Fm1HAAABfdewxU8AAAQDAEcwRQIhAIKKuoeD%2Bd6bPXg3JPeeC%2Bsd3Pass2Vo4ppn6BsoW3L%2FAiAA3V%2B%2Fxe6wUqt9TL2FL%2B6TvYVjFFEQiaFKAlO892tRJzANBgkqhkiG9w0BAQsFAAOCAQEAp%2FFN%2FTlUN3U8%2F6o%2BimqJoWADYNAigaODkmg%2BO4mTQBC%2BlxR3Q33E30d6wjd6CFEyd0QDirZAeTRnCWuXbh9wC0POpBJISQf%2Fmt%2Baa7RXYETnD8TgKuGikcMzGI6iujIxaMz8iUL%2BHKOuH37Y00K1CPAcjrCFxW5xvUtOx3BxdNrO05RIRpmGyK%2BANHIVKh5Ts9AC3elWZE1EceSvnnCEhSJ1uU9mgeCrxP%2FA8n87%2BwcREGq3E5OK7sKTJhl2mhYR0Lozj9npqdQovEzC2JwwjUpBmTFULObr1tETjRzYgLATL5urd4OnYH%2BrzEaRq%2FXzxsm2%2FIB5N2Rm8ageXIpxNA%3D%3D&cert=MIIFFjCCAv6gAwIBAgIRAJErCErPDBinU%2FbWLiWnX1owDQYJKoZIhvcNAQELBQAwTzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2VhcmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMjAwOTA0MDAwMDAwWhcNMjUwOTE1MTYwMDAwWjAyMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNTGV0J3MgRW5jcnlwdDELMAkGA1UEAxMCUjMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7AhUozPaglNMPEuyNVZLD%2BILxmaZ6QoinXSaqtSu5xUyxr45r%2BXXIo9cPR5QUVTVXjJ6oojkZ9YI8QqlObvU7wy7bjcCwXPNZOOftz2nwWgsbvsCUJCWH%2BjdxsxPnHKzhm%2B%2Fb5DtFUkWWqcFTzjTIUu61ru2P3mBw4qVUq7ZtDpelQDRrK9O8ZutmNHz6a4uPVymZ%2BDAXXbpyb%2FuBxa3Shlg9F8fnCbvxK%2FeG3MHacV3URuPMrSXBiLxgZ3Vms%2FEY96Jc5lP%2FOoi2R6X%2FExjqmAl3P51T%2Bc8B5fWmcBcUr2Ok%2F5mzk53cU6cG%2FkiFHaFpriV1uxPMUgP17VGhi9sVAgMBAAGjggEIMIIBBDAOBgNVHQ8BAf8EBAMCAYYwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMBMBIGA1UdEwEB%2FwQIMAYBAf8CAQAwHQYDVR0OBBYEFBQusxe3WFbLrlAJQOYfr52LFMLGMB8GA1UdIwQYMBaAFHm0WeZ7tuXkAXOACIjIGlj26ZtuMDIGCCsGAQUFBwEBBCYwJDAiBggrBgEFBQcwAoYWaHR0cDovL3gxLmkubGVuY3Iub3JnLzAnBgNVHR8EIDAeMBygGqAYhhZodHRwOi8veDEuYy5sZW5jci5vcmcvMCIGA1UdIAQbMBkwCAYGZ4EMAQIBMA0GCysGAQQBgt8TAQEBMA0GCSqGSIb3DQEBCwUAA4ICAQCFyk5HPqP3hUSFvNVneLKYY611TR6WPTNlclQtgaDqw%2B34IL9fzLdwALduO%2FZelN7kIJ%2Bm74uyA%2BeitRY8kc607TkC53wlikfmZW4%2FRvTZ8M6UK%2B5UzhK8jCdLuMGYL6KvzXGRSgi3yLgjewQtCPkIVz6D2QQzCkcheAmCJ8MqyJu5zlzyZMjAvnnAT45tRAxekrsu94sQ4egdRCnbWSDtY7kh%2BBImlJNXoB1lBMEKIq4QDUOXoRgffuDghje1WrG9ML%2BHbisq%2FyFOGwXD9RiX8F6sw6W4avAuvDszue5L3sz85K%2BEC4Y%2FwFVDNvZo4TYXao6Z0f%2BlQKc0t8DQYzk1OXVu8rp2yJMC6alLbBfODALZvYH7n7do1AZls4I9d1P4jnkDrQoxB3UqQ9hVl3LEKQ73xF1OyK5GhDDX8oVfGKF5u%2BdecIsH4YaTw7mP3GFxJSqv3%2B0lUFJoi5Lc5da149p90IdshCExroL1%2B7mryIkXPeFM5TgO9r0rvZaBFOvV2z0gp35Z0%2BL4WPlbuEjN%2FlxPFin%2BHlUjr8gRsI3qfJOQFy%2F9rKIJR0Y%2F8Omwt%2F8oTWgy1mdeHmmjk7j1nYsvC9JSQ6ZvMldlTTKB3zhThV1%2BXWYp6rjd5JW1zbVWEkLNxE7GJThEUG3szgBVGP7pSWTUTsqXnLRbwHOoq7hHwg%3D%3D&cert=MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAwTzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2VhcmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJuZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBYMTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygch77ct984kIxuPOZXoHj3dcKi%2FvVqbvYATyjb3miGbESTtrFj%2FRQSa78f0uoxmyF%2B0TM8ukj13Xnfs7j%2FEvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4%2B3mX6UA5%2FTR5d8mUgjU%2Bg4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8%2Bo%2Bu3dpjq%2BsWT8KOEUt%2Bzwvo%2F7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm%2FELNKjD%2BJo2FR3qyHB5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x%2BUCB5iPNgiV5%2BI3lg02dZ77DnKxHZu8A%2FlJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUvKBds0pjBqAlkd25HN7rOrFleaJ1%2FctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWnOlFuhjuefXKnEgV4We0%2BUXgVCwOPjdAvBbI%2Be0ocS3MFEvzG6uBQE3xDk3SzynTnjh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbwqHyGO0aoSCqI3Haadr8faqU9GY%2FrOPNk3sgrDQoo%2F%2Ffb4hVC1CLQJ13hef4Y53CIrU7m2Ys6xt0nUW7%2FvGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB%2FwQEAwIBBjAPBgNVHRMBAf8EBTADAQH%2FMB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkqhkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu%2BILlaS%2FV9lZLubhzEFnTIZd%2B50xx%2B7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe%2BGnY%2BEgPbk6ZGQ3BebYhtF8GaV0nxvwuo77x%2FPy9auJ%2FGpsMiu%2FX1%2BmvoiBOv%2F2X%2FqkSsisRcOj%2FKKNFtY2PwByVS5uCbMiogziUwthDyC3%2B6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5ORAzI4JMPJ%2BGslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7UrTkXWStAmzOVyyghqpZXjFaH3pO3JLF%2Bl%2B%2F%2BsKAIuvtd7u%2BNxe5AW0wdeRlN8NwdCjNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4%2B63SM1N95R1NbdWhscdCb%2BZAJzVcoyi3B43njTOQ5yOf%2B1CceWxG1bQVs5ZufpsMljq4Ui0%2F1lvh%2BwjChP4kqKOJ2qxq4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U%2Ft7y0Ff%2F9yi0GE44Za4rF2LN9d11TPAmRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc%2FubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57demyPxgcYxn%2FeR44%2FKJ4EBs%2BlVDR3veyJm%2BkXQ99b21%2F%2Bjh5Xos1AnX5iItreGCc%3D
