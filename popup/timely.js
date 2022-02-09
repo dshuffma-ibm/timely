@@ -779,11 +779,8 @@ function json2js(str) {
 	return str.replace(/\s*(.+-.+)\s*:/g, '\n\'$1\':').replace(/(\w+\s+\w+)\s*:/g, '\'$1\':');
 }
 
-
+// decode the string as ASN.1 
 function decodeAsn1(str) {
-	//console.log('str', str);
-	// dsh todo parse prev comments and update them instead of removing them....
-
 	let der = Base64.unarmor(str);
 	let offset = 0;
 	let asn1 = ASN1.decode(der, offset);
