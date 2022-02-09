@@ -341,14 +341,14 @@ function convert4humans() {
 			document.querySelector('#output').classList.remove('error');
 		} else {													// if a number is provided show the date in the output
 			ts_ms = conform_2_ms(rawInput);
-			let formated = formatDate(ts_ms, FORMAT);
-			if (formated) {
+			let formatted = formatDate(ts_ms, FORMAT);
+			if (formatted) {
 				document.querySelector('#output').classList.remove('error');
 			} else {
 				document.querySelector('#output').classList.add('error');
-				formated = 'Try again bud, like a number';
+				formatted = 'Try again bud, like a number';
 			}
-			updateIfDiff('#output', formated);
+			updateIfDiff('#output', formatted);
 		}
 		let diff = ts_ms - Date.now();
 		document.querySelector('#elapsed').innerText = friendlyMs(diff);
@@ -781,13 +781,23 @@ function json2js(str) {
 
 // decode the string as ASN.1 
 function decodeAsn1(str) {
-	let der = Base64.unarmor(str);
-	let offset = 0;
-	let asn1 = ASN1.decode(der, offset);
-	//console.log('asn1 str', asn1.toPrettyString());
-	//console.log('asn1 obj', JSON.stringify(asn1.toObj(), null, 2));
-	const cert = asn1.toCertObj();
-	return makePemComments(cert) + '\n' + str;
+	let txt = '';
+	const LABEL = '-----BEGIN';
+	const parts = str.split(LABEL);
+	for (let i in parts) {
+		if (parts[i]) {
+			const filtered = parts[i].replace(/#.+\n/g, '');
+			if (filtered && filtered.length > 8) {
+				let section = LABEL + filtered;
+				let der = Base64.unarmor(section);
+				let asn1 = ASN1.decode(der, 0);
+				//console.log('asn1 str', asn1.toPrettyString());
+				//console.log('asn1 obj', JSON.stringify(asn1.toObj(), null, 2));
+				txt += makePemComments(asn1.toCertObj()) + '\n' + section;
+			}
+		}
+	}
+	return txt.replace(/\n\n\n+/g, '\n\n');
 }
 
 // format cert array details into pem comments
