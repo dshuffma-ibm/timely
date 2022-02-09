@@ -492,10 +492,10 @@
 
 					if (firstKey0 === 'UTCTime') {
 						if (firstKey1 === 'UTCTime') {
-							ret_stuff.push(['notBefore', obj[key][0].UTCTime]);
-							ret_stuff.push(['notAfter', obj[key][1].UTCTime]);
+							ret_stuff.push(['notBefore', obj[key][0].UTCTime + ' (' + makeTime(obj[key][0].UTCTime) + ')']);
+							ret_stuff.push(['notAfter', obj[key][1].UTCTime + ' (' + makeTime(obj[key][1].UTCTime) + ')']);
 						} else {
-							ret_stuff.push(['UTCTime', obj[key][0].UTCTime]);
+							ret_stuff.push(['UTCTime', obj[key][0].UTCTime + ' (' + makeTime(obj[key][0].UTCTime) + ')']);
 						}
 					}
 				}
@@ -548,6 +548,13 @@
 		}
 		return ret;
 	}
+	function makeTime(str) {
+		const parts = str.split(' ');
+		const use = parts[0] + ' ' + parts[1];
+		const d = new Date(use);
+		return d.getTime();
+	}
+
 	ASN1.prototype.posContent = function () {
 		return this.stream.pos + this.header;
 	};

@@ -440,7 +440,7 @@ function updateIfDiff(id, str) {
 	str = str.toString().trim();
 	let currently = document.querySelector(id).innerText;
 	if (currently !== str) {
-		document.querySelector(id).innerText = str;
+		document.querySelector(id).innerText = str + (!use_offset ? ' UTC' : '');
 	}
 }
 
@@ -783,13 +783,13 @@ function json2js(str) {
 function decodeAsn1(str) {
 	let txt = '';
 	const LABEL = '-----BEGIN';
-	const parts = str.split(LABEL);
-	for (let i in parts) {
-		if (parts[i]) {
-			const filtered = parts[i].replace(/#.+\n/g, '');
-			if (filtered && filtered.length > 8) {
-				let section = LABEL + filtered;
-				let der = Base64.unarmor(section);
+	const parts = str.split(LABEL);								// split on preamble (BEGIN)
+	for (let i in parts) {										// iter on each cert section
+		if (parts[i]) {											// skip blank
+			const filtered = parts[i].replace(/#.+\n/g, '');	// remove previous decoding comments
+			if (filtered && filtered.length > 4) {				// skip nearly blank (new line or 2)
+				let section = LABEL + filtered;					// add the preamble back to the content
+				let der = Base64.unarmor(section);				// start decoding
 				let asn1 = ASN1.decode(der, 0);
 				//console.log('asn1 str', asn1.toPrettyString());
 				//console.log('asn1 obj', JSON.stringify(asn1.toObj(), null, 2));
