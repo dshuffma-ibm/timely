@@ -4,7 +4,7 @@
 test1();
 test2();
 test3();
-test4();
+//test4();
 test5();
 test6();
 
@@ -172,63 +172,6 @@ ${tls_root_cert_curveEd25519}`;
 		console.log('test3 - good');
 	} else {
 		console.log('test3 - bad', correct.length, resp.length, resp);
-	}
-}
-
-
-//---------------------------------------------------------------------------
-// ibp tls cert with alt subjects
-//---------------------------------------------------------------------------
-function test4() {
-	const tls_root_cert_ibp = 
-`-----BEGIN CERTIFICATE-----
-MIIDoDCCAoigAwIBAgIJZKYsvmiEOtSjMA0GCSqGSIb3DQEBCwUAMHgxCzAJBgNV
-BAYTAlVTMRcwFQYDVQQIEw5Ob3J0aCBDYXJvbGluYTEPMA0GA1UEBxMGRHVyaGFt
-MRIwEAYDVQQDEwlsb2NhbGhvc3QxFjAUBgNVBAoTDWlicDItYXV0by1nZW4xEzAR
-BgNVBAsTCkJsb2NrY2hhaW4wHhcNMjAxMjAxMjExMTMzWhcNMjIxMjAxMjExMTMz
-WjB4MQswCQYDVQQGEwJVUzEXMBUGA1UECBMOTm9ydGggQ2Fyb2xpbmExDzANBgNV
-BAcTBkR1cmhhbTESMBAGA1UEAxMJbG9jYWxob3N0MRYwFAYDVQQKEw1pYnAyLWF1
-dG8tZ2VuMRMwEQYDVQQLEwpCbG9ja2NoYWluMIIBIjANBgkqhkiG9w0BAQEFAAOC
-AQ8AMIIBCgKCAQEAueVSQvhVmk/j+tHxlwuVH2NW1Dmg+JSxehuH1Pa1rbeQ+Gzs
-fkk+/UbTizwg8Wjq7B97uqwzkO14QTflJnsBE3P0I+fyda4vPY93hoe6N2tQD5ww
-4rfRmvu3fqBobnR1GexdukG1TnO6JHMv6+td/pNc3XYylpIB5Ej2PAcXp+kC+FGD
-gIIRtltCDnxNUhbph0gjTpwx+rnnSReBC7k7e9yr4KLbJ+VPbLhCGeSHPs1f0WEv
-hQfge07HP1d81rYXbGl9P86HpPSqnMCPaiH+zRteroXjxHSHpWwgY/VZsEYG6iXU
-KVJ4+CUhXLQJIKLsOFV7BaR+AD/FbVHU6xuGawIDAQABoy0wKzAUBgNVHREEDTAL
-gglsb2NhbGhvc3QwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDQYJKoZIhvcNAQELBQAD
-ggEBABFeQvi8CtxBJgTHTxGNLP+lg1YeAOkHljAjsFru78RjnB6Ket1TN9xNNL2m
-LDgufqJOyxUYgk3BHXnZpHcm/ir8JUXlQIX9Q1yfXi9k959CW/0ONV1pZPIHQeKK
-qEf5FXvI0Ejgn+QPVfPtDU615pH/zNVvUwdvREIcOKJ35J8DKjst8xCnT8qy9bCh
-RN/xLFMysM1ASi9gk0zlYjN6elurqIj2Y7FBPz6z3gg/2mwWQAeSYzE39cX8nxVQ
-6aF8fRV541rNVfko6tCK46NlBwZkTOnxmGGNTeCaIQUnQxbnLEPNPWcKDh49C/OY
-esx8tIaHWGiu/vS7oo/QSSnM3LA=
------END CERTIFICATE-----`;
-	const resp = decodeAsn1(tls_root_cert_ibp);
-	const correct =
-`
-# Serial: 064A62CBE68843AD4A3
-# countryName: US
-# stateOrProvinceName: North Carolina
-# localityName: Durham
-# commonName: localhost
-# organizationName: ibp2-auto-gen
-# organizationalUnitName: Blockchain
-# notBefore: 2020-12-01 21:11:33 UTC
-# notAfter: 2022-12-01 21:11:33 UTC
-# countryName: US
-# stateOrProvinceName: North Carolina
-# localityName: Durham
-# commonName: localhost
-# organizationName: ibp2-auto-gen
-# organizationalUnitName: Blockchain
-# subjectAltName: localhost
-# extKeyUsage: serverAuth
-${tls_root_cert_ibp}`;
-
-	if (resp === correct) {
-		console.log('test4 - good');
-	} else {
-		console.log('test4 - bad', correct.length, resp.length, resp);
 	}
 }
 
