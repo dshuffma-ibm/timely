@@ -500,11 +500,12 @@ ASN1.prototype.toObj = function (indent) {
 
 ASN1.prototype.toCertObj = function () {
     let obj = this.toObj();
-    return this.toCertObjRecur(obj, 0);
+    let ret = [];
+    this.toCertObjRecur(obj, ret, 0);
+    return ret;
 };
 
-let ret_stuff = []; // dsh todo undo global
-ASN1.prototype.toCertObjRecur = function (obj, depth) {
+ASN1.prototype.toCertObjRecur = function (obj, ret_stuff, depth) {
     if(typeof obj === 'object'){
         for(let key in obj){
             if(key === 'SEQUENCE'){
@@ -528,29 +529,12 @@ ASN1.prototype.toCertObjRecur = function (obj, depth) {
                                 }
                                 val = arr;
                             }
-                        } /*else                   if(obj[key][0].OBJECT_IDENTIFIER === 'subjectKeyIdentifier' || obj[key][0].OBJECT_IDENTIFIER === 'authorityKeyIdentifier'){
-                            let temp = flatten_obj(obj[key][1]);
-                            if(temp.length === 1){
-                                temp = temp[0];
-                            }
-                            val = clean_val(temp);
-                            //const parts = temp.split('|');
-                            //if(parts && parts[1]){
-                           //     val = parts[1];
-                            //}
-                        } if(obj[key][0].OBJECT_IDENTIFIER === 'subjectAltName'){
-                            let temp = flatten_obj(obj[key][1]);
-                            let arr = [];
-                            for(let i in temp){
-                                arr.push(clean_val(temp[i]));
-                            }
-                            val = arr;
-                        } */else if(val && val.includes('|')){
+                        } else if(val && val.includes('|')){
                             val = clean_val(val);
                         }
                         ret_stuff.push([obj[key][0].OBJECT_IDENTIFIER, val]);
                     } else {
-                        ret_stuff.push([obj[key][0].OBJECT_IDENTIFIER, '??']);
+                        ret_stuff.push([obj[key][0].OBJECT_IDENTIFIER, '--']);
                     }
                 }
 
@@ -579,13 +563,13 @@ ASN1.prototype.toCertObjRecur = function (obj, depth) {
                     return;
                 } else {
                     if(key !== 'OCTET_STRING'){         // are already flattened, dont recurse here or else we'd be adding duplicate data
-                        this.toCertObjRecur(obj[key], ++depth);
+                        this.toCertObjRecur(obj[key], ret_stuff, ++depth);
                     }
                 }
             }
         }
     }
-    return ret_stuff;
+    return;
 };
 
 function clean_val(val){
