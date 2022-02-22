@@ -1,19 +1,18 @@
-//---------------------------------------------------------------------------
-// The following are test certs....
-//---------------------------------------------------------------------------
-test1();
-test2();
-test3();
-//test4();
-test5();
-test6();
+/* global expect, assert*/
 
-//---------------------------------------------------------------------------
-// tls cert w/o alt subjects
-//---------------------------------------------------------------------------
-function test1() {
-	const tls_root_cert = 
-`-----BEGIN CERTIFICATE-----
+console.log('loaded asn1 test');
+
+describe('asn1 testing', function () {
+	this.timeout(5000);
+
+	// ---------------------------------------------------------------------------------------------------------------------
+	describe('tls cert decoding', () => {
+
+		//---------------------------------------------------------------------------
+		// tls cert w/o alt subjects
+		//---------------------------------------------------------------------------
+		it('test1', (done) => {
+			const tls_root_cert = `-----BEGIN CERTIFICATE-----
 MIIFgjCCA2qgAwIBAgILWku9WvtPilv6ZeUwDQYJKoZIhvcNAQELBQAwTTELMAkG
 A1UEBhMCQVQxIzAhBgNVBAoTGmUtY29tbWVyY2UgbW9uaXRvcmluZyBHbWJIMRkw
 FwYDVQQDExBHTE9CQUxUUlVTVCAyMDIwMB4XDTIwMDIxMDAwMDAwMFoXDTQwMDYx
@@ -45,15 +44,14 @@ MUO+1918oa2u1qsgEu8KwxCMSZY13At1XrFP1U80DhEgB3VDRemjEdqso5nCtnkn
 aFvowdlxfv1k7/9nR4hYJS8+hge9+6jlgqispdNpQ80xiEmEU5LAsTkbOYMBMMTy
 qfrQA71yN2BWHzZ8vTmR9W0Nv3vXkg==
 -----END CERTIFICATE-----`;
-	const resp = decodeAsn1(tls_root_cert);
-	const correct =
-`
+			const resp = decodeAsn1(tls_root_cert);
+			const correct = `
 # Serial: 05A4BBD5AFB4F8A5BFA65E5
 # countryName: AT
 # organizationName: e-commerce monitoring GmbH
 # commonName: GLOBALTRUST 2020
-# notBefore: 2020-02-10 00:00:00 UTC
-# notAfter: 2040-06-10 00:00:00 UTC
+# notBefore: 2020-02-10 00:00:00 UTC (1581310800000)
+# notAfter: 2040-06-10 00:00:00 UTC (2222913600000)
 # countryName: AT
 # organizationName: e-commerce monitoring GmbH
 # commonName: GLOBALTRUST 2020
@@ -62,20 +60,16 @@ qfrQA71yN2BWHzZ8vTmR9W0Nv3vXkg==
 # subjectKeyIdentifier: DC2E1FD1613779E4ABD5D5B31271683D6A689C22
 # authorityKeyIdentifier: DC2E1FD1613779E4ABD5D5B31271683D6A689C22
 ${tls_root_cert}`;
+			expect(resp).to.equal(correct);
+			done();
+		});
+	});
 
-	if (resp === correct) {
-		console.log('test1 - good');
-	} else {
-		console.log('test1 - bad', correct.length, resp.length);
-	}
-}
-
-//---------------------------------------------------------------------------
-// tls cert with alt subjects
-//---------------------------------------------------------------------------
-function test2() {
-	const tls_root_cert_alt_subjects = 
-`-----BEGIN CERTIFICATE-----
+	//---------------------------------------------------------------------------
+	// tls cert with alt subjects
+	//---------------------------------------------------------------------------
+	it('test2', (done) => {
+		const tls_root_cert_alt_subjects = `-----BEGIN CERTIFICATE-----
 MIIFOjCCBCKgAwIBAgISBCdVASalHOGJqcxB/PyuLfhVMA0GCSqGSIb3DQEBCwUA
 MDIxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQD
 EwJSMzAeFw0yMTEyMjAxMDUzNDVaFw0yMjAzMjAxMDUzNDRaMB0xGzAZBgNVBAMT
@@ -105,15 +99,14 @@ jrCFxW5xvUtOx3BxdNrO05RIRpmGyK+ANHIVKh5Ts9AC3elWZE1EceSvnnCEhSJ1
 uU9mgeCrxP/A8n87+wcREGq3E5OK7sKTJhl2mhYR0Lozj9npqdQovEzC2JwwjUpB
 mTFULObr1tETjRzYgLATL5urd4OnYH+rzEaRq/Xzxsm2/IB5N2Rm8ageXIpxNA==
 -----END CERTIFICATE-----`;
-	const resp = decodeAsn1(tls_root_cert_alt_subjects);
-	const correct =
-`
+		const resp = decodeAsn1(tls_root_cert_alt_subjects);
+		const correct = `
 # Serial: 0427550126A51CE189A9CC41FCFCAE2DF855
 # countryName: US
 # organizationName: Let's Encrypt
 # commonName: R3
-# notBefore: 2021-12-20 10:53:45 UTC
-# notAfter: 2022-03-20 10:53:44 UTC
+# notBefore: 2021-12-20 10:53:45 UTC (1640015625000)
+# notAfter: 2022-03-20 10:53:44 UTC (1647788024000)
 # commonName: www.sslshopper.com
 # keyUsage: true
 # extKeyUsage:, serverAuth, clientAuth
@@ -124,20 +117,15 @@ mTFULObr1tETjRzYgLATL5urd4OnYH+rzEaRq/Xzxsm2/IB5N2Rm8ageXIpxNA==
 # subjectAltName:, sslshopper.com, www.sslshopper.com
 # certificatePolicies:, 2.23.140.1.2.1, 1.3.6.1.4.1.44947.1.1.1, cps, http://cps.letsencrypt.org
 ${tls_root_cert_alt_subjects}`;
+		expect(resp).to.equal(correct);
+		done();
+	});
 
-	if (resp === correct) {
-		console.log('test2 - good');
-	} else {
-		console.log('test2 - bad', correct.length, resp.length, resp);
-	}
-}
-
-//---------------------------------------------------------------------------
-// tls cert with alt subjects
-//---------------------------------------------------------------------------
-function test3() {
-	const tls_root_cert_curveEd25519 = 
-`-----BEGIN CERTIFICATE-----
+	//---------------------------------------------------------------------------
+	// tls cert with alt subjects
+	//---------------------------------------------------------------------------
+	it('test3', (done) => {
+		const tls_root_cert_curveEd25519 = `-----BEGIN CERTIFICATE-----
 MIIBfzCCATGgAwIBAgIUfI5kSdcO2S0+LkpdL3b2VUJG10YwBQYDK2VwMDUxCzAJ
 BgNVBAYTAklUMQ8wDQYDVQQHDAZNaWxhbm8xFTATBgNVBAMMDFRlc3QgZWQyNTUx
 OTAeFw0yMDA5MDIxMzI1MjZaFw0zMDA5MDIxMzI1MjZaMDUxCzAJBgNVBAYTAklU
@@ -148,16 +136,15 @@ rh5y2JqASugwDwYDVR0TAQH/BAUwAwEB/zAFBgMrZXADQQBvc3e+KJZaMzbX5TT9
 kPP9QH8fAvkAV/IWDxZrBL9lhLaY0tDSv0zWbw624uidBKPgmVD5wm3ec60dNVeF
 ZYYG
 -----END CERTIFICATE-----`;
-	const resp = decodeAsn1(tls_root_cert_curveEd25519);
-	const correct =
-`
+		const resp = decodeAsn1(tls_root_cert_curveEd25519);
+		const correct = `
 # Serial: 07C8E6449D70ED92D3E2E4A5D2F76F6554246D746
 # curveEd25519: --
 # countryName: IT
 # localityName: Milano
 # commonName: Test ed25519
-# notBefore: 2020-09-02 13:25:26 UTC
-# notAfter: 2030-09-02 13:25:26 UTC
+# notBefore: 2020-09-02 13:25:26 UTC (1599067526000)
+# notAfter: 2030-09-02 13:25:26 UTC (1914600326000)
 # countryName: IT
 # localityName: Milano
 # commonName: Test ed25519
@@ -167,20 +154,15 @@ ZYYG
 # basicConstraints: true
 # curveEd25519: --
 ${tls_root_cert_curveEd25519}`;
+		expect(resp).to.equal(correct);
+		done();
+	});
 
-	if (resp === correct) {
-		console.log('test3 - good');
-	} else {
-		console.log('test3 - bad', correct.length, resp.length, resp);
-	}
-}
-
-//---------------------------------------------------------------------------
-// let's encrypt tls cert
-//---------------------------------------------------------------------------
-function test5() {
-	const tls_root_encrypt = 
-`-----BEGIN CERTIFICATE-----
+	//---------------------------------------------------------------------------
+	// tls cert with alt subjects
+	//---------------------------------------------------------------------------
+	it('test4', (done) => {
+		const tls_root_encrypt = `-----BEGIN CERTIFICATE-----
 MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/
 MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT
 DkRTVCBSb290IENBIFgzMB4XDTE2MDMxNzE2NDA0NloXDTIxMDMxNzE2NDA0Nlow
@@ -207,14 +189,13 @@ X4Po1QYz+3dszkDqMp4fklxBwXRsW10KXzPMTZ+sOPAveyxindmjkW8lGy+QsRlG
 PfZ+G6Z6h7mjem0Y+iWlkYcV4PIWL1iwBi8saCbGS5jN2p8M+X+Q7UNKEkROb3N6
 KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==
 -----END CERTIFICATE-----`;
-	const resp = decodeAsn1(tls_root_encrypt);
-	const correct =
-`
+		const resp = decodeAsn1(tls_root_encrypt);
+		const correct = `
 # Serial: 0A0141420000015385736A0B85ECA708
 # organizationName: Digital Signature Trust Co.
 # commonName: DST Root CA X3
-# notBefore: 2016-03-17 16:40:46 UTC
-# notAfter: 2021-03-17 16:40:46 UTC
+# notBefore: 2016-03-17 16:40:46 UTC (1458247246000)
+# notAfter: 2021-03-17 16:40:46 UTC (1616013646000)
 # countryName: US
 # organizationName: Let's Encrypt
 # commonName: Let's Encrypt Authority X3
@@ -226,20 +207,15 @@ KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==
 # cRLDistributionPoints: http://crl.identrust.com/DSTROOTCAX3CRL.crl
 # subjectKeyIdentifier: A84A6A63047DDDBAE6D139B7A64565EFF3A8ECA1
 ${tls_root_encrypt}`;
+		expect(resp).to.equal(correct);
+		done();
+	});
 
-	if (resp === correct) {
-		console.log('test5 - good');
-	} else {
-		console.log('test5 - bad', correct.length, resp.length, resp);
-	}
-}
-
-//---------------------------------------------------------------------------
-// let's encrypt tls cert
-//---------------------------------------------------------------------------
-function test6() {
-	const pub_cert_ibp = 
-`-----BEGIN CERTIFICATE-----
+	//---------------------------------------------------------------------------
+	// let's encrypt tls cert
+	//---------------------------------------------------------------------------
+	it('test5', (done) => {
+		const pub_cert_ibp = `-----BEGIN CERTIFICATE-----
 MIIB5TCCAYugAwIBAgIUeki3wjpNDSPcrlnWAC2l4a3hProwCgYIKoZIzj0EAwIw
 RTEoMAkGA1UECxMCY2EwCgYDVQQLEwNpYnAwDwYDVQQLEwhQZWVyT3JnMjEZMBcG
 A1UEAxMQYWRtaW5QZWVyT3JnMkNBMTAeFw0xODA5MTcwMzAwMDBaFw0xOTA5MTcw
@@ -252,17 +228,16 @@ aNByMO0q/vqxWmjfdAr38LuYUTAKBggqhkjOPQQDAgNIADBFAiEAqjnZ9n7y+LCd
 wno9hn1LHYAWJNjqcd6z4gP+NtMaAIYCIFfLT0d482WdOmHxCcqu88ljmeGYCSfS
 nDgMLtxQnCIQ
 -----END CERTIFICATE-----`;
-	const resp = decodeAsn1(pub_cert_ibp);
-	const correct =
-`
+		const resp = decodeAsn1(pub_cert_ibp);
+		const correct = `
 # Serial: 07A48B7C23A4D0D23DCAE59D6002DA5E1ADE13EBA
 # ecdsaWithSHA256: --
 # organizationalUnitName: ca
 # organizationalUnitName: ibp
 # organizationalUnitName: PeerOrg2
 # commonName: adminPeerOrg2CA1
-# notBefore: 2018-09-17 03:00:00 UTC
-# notAfter: 2019-09-17 03:05:00 UTC
+# notBefore: 2018-09-17 03:00:00 UTC (1537167600000)
+# notAfter: 2019-09-17 03:05:00 UTC (1568703900000)
 # organizationalUnitName: client
 # organizationalUnitName: ibp
 # organizationalUnitName: PeerOrg2
@@ -276,10 +251,8 @@ nDgMLtxQnCIQ
 # Serial: 0AA39D9F67EF2F8B09DC27A3D867D4B1D801624D8EA71DEB3E203FE36D31A0086
 # Serial: 057CB4F4778F3659D3A61F109CAAEF3C96399E1980927D29C380C2EDC509C2210
 ${pub_cert_ibp}`;
+		expect(resp).to.equal(correct);
+		done();
+	});
 
-	if (resp === correct) {
-		console.log('test6 - good');
-	} else {
-		console.log('test6 - bad', correct.length, resp.length, resp);
-	}
-}
+});

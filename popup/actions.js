@@ -9,7 +9,7 @@ const fixJson = (str) => {
 
 // fix the JSON - or die in the fire of your own making
 function fixIt(str, iter, maxIter) {
-	let DEBUG = true;
+	let DEBUG = false;
 	const lookingForBracket = Symbol('lookingForBracket');
 	const lookingForKeyStart = Symbol('lookingForKeyStart');
 	const lookingForKeyEnd = Symbol('lookingForKeyEnd');
