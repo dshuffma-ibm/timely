@@ -16,4 +16,3 @@
 - open browser console with `ctrl` + `shift` + `j`
 - click gear, click `Show Content Messages`
 - see logs!
-

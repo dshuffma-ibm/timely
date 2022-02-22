@@ -1,108 +1,124 @@
 /* eslint no-bitwise: 0 */
 /* global formatDate, getThing, saveThing, LS_KEY_DATE, LS_KEY_TIME, LS_KEY_HEX, LS_KEY_OPEN, LS_KEY_FORGET, LS_KEY_TEXT, LS_KEY_ENDINGS */
 /* global formatDate, getThing, saveThing, EXPIRATION, FORMAT, ADD_SPACE_HEX, LINE_ENDING, fixJson, breakMeDown */
+
+
+let ASN1 = null;
+let Base64 = null;
+
+(typeof define != 'undefined' ? define : function (factory) {
+	'use strict';
+	if (typeof module == 'object') module.exports = factory(function (name) { return require(name); });
+	else window.asn1 = factory(function (name) { return window[name.substring(2)]; });
+})(function (require) {
+	"use strict";
+
+	ASN1 = require('./asn1');
+	Base64 = require('./base64');
+});
+
 let auto_ts_units = true;
 let use_offset = true;
 let prev_text = '';
 let fixed_text = '';
 
-console.clear();
-console.log('[start] starting timely...');
+if (!window.testing) {
+	console.log('[start] starting timely...');
+	updateNow();
+	listenHereSon();
+	showUnits('ms');
+	updateOffsetText();
 
-updateNow();
-listenHereSon();
-showUnits('ms');
-updateOffsetText();
-
-// -------------------------------------------------------------
-// when debugging uncomment this block
-/*let textInput = document.getElementById('inputText').innerText;
-document.querySelector('#inputText').innerHTML = prettyPrint(line_endings(textInput));
-let text = document.getElementById('inputText').innerText;
-if (text.indexOf('%3C') >= 0) {
-	document.querySelector('#inputText').innerText = urlDecode(text);
-}
-openTextFormatter();*/
-// -------------------------------------------------------------
-
-getThing(LS_KEY_DATE, (fmt) => {
-	if (fmt) {
-		FORMAT = fmt;
+	// -------------------------------------------------------------
+	// when debugging uncomment this block
+	/*let textInput = document.getElementById('inputText').innerText;
+	document.querySelector('#inputText').innerHTML = prettyPrint(line_endings(textInput));
+	let text = document.getElementById('inputText').innerText;
+	if (text.indexOf('%3C') >= 0) {
+		document.querySelector('#inputText').innerText = urlDecode(text);
 	}
-	console.log('[settings] date format setting', FORMAT);
-});
+	openTextFormatter();*/
+	// -------------------------------------------------------------
 
-getThing(LS_KEY_HEX, (setting) => {
-	if (setting !== undefined && setting !== null) {
-		ADD_SPACE_HEX = setting;
-	}
-	console.log('[settings] hex space setting', ADD_SPACE_HEX);
-});
-
-getThing(LS_KEY_FORGET, (forgetSetting) => {
-	if (forgetSetting === 'onclose') {
-		EXPIRATION = 0;
-	}
-	if (forgetSetting === 'minutes') {
-		EXPIRATION = 1000 * 60 * 5;
-	}
-	if (forgetSetting === 'forever') {
-		EXPIRATION = Date.now() * 2;		// any distance future timestamp
-	}
-	console.log('[settings] forget expiration setting', EXPIRATION);
-});
-
-getThing(LS_KEY_OPEN, (autoOpen) => {
-	if (autoOpen === true) {
-		console.log('[auto-open] opening text formatter panel');
-		openTextFormatter();
-	}
-	console.log('[settings] hex space setting', autoOpen);
-});
-
-// retrieve past input text if available
-getThing(LS_KEY_TEXT, (text) => {
-	if (text !== undefined) {
-		console.log('[text] loading input text');
-		document.getElementById('inputText').innerText = text;
-	}
-});
-
-// retrieve past input timestamp if available
-getThing(LS_KEY_TIME, (timestamp) => {
-	if (timestamp !== undefined) {
-		console.log('[text] loading input text');
-		document.getElementById('inputTs').value = timestamp;
-	}
-});
-
-// retrieve line endings setting
-getThing(LS_KEY_ENDINGS, (lineEndings) => {
-	if (lineEndings !== undefined) {
-		console.log('[settings] loading line endings');
-		LINE_ENDING = lineEndings;
-	}
-});
-
-// update everything all the time
-setInterval(function () {
-	try {
-		convert4humans();
-		updateNow();
-
-		// hide or show the scroll to top button
-		const top = document.getElementById('htmlId').scrollTop;
-		if (top >= 120) {
-			document.querySelector('#scroll2top').classList.remove('hidden');
-		} else {
-			document.querySelector('#scroll2top').classList.add('hidden');
+	getThing(LS_KEY_DATE, (fmt) => {
+		if (fmt) {
+			FORMAT = fmt;
 		}
-	} catch (e) {
-		console.error(e);
-	}
-}, 300);
+		console.log('[settings] date format setting', FORMAT);
+	});
 
-document.getElementById('inputTs').focus();
+	getThing(LS_KEY_HEX, (setting) => {
+		if (setting !== undefined && setting !== null) {
+			ADD_SPACE_HEX = setting;
+		}
+		console.log('[settings] hex space setting', ADD_SPACE_HEX);
+	});
+
+	getThing(LS_KEY_FORGET, (forgetSetting) => {
+		if (forgetSetting === 'onclose') {
+			EXPIRATION = 0;
+		}
+		if (forgetSetting === 'minutes') {
+			EXPIRATION = 1000 * 60 * 5;
+		}
+		if (forgetSetting === 'forever') {
+			EXPIRATION = Date.now() * 2;		// any distance future timestamp
+		}
+		console.log('[settings] forget expiration setting', EXPIRATION);
+	});
+
+	getThing(LS_KEY_OPEN, (autoOpen) => {
+		if (autoOpen === true) {
+			console.log('[auto-open] opening text formatter panel');
+			openTextFormatter();
+		}
+		console.log('[settings] hex space setting', autoOpen);
+	});
+
+	// retrieve past input text if available
+	getThing(LS_KEY_TEXT, (text) => {
+		if (text !== undefined) {
+			console.log('[text] loading input text');
+			document.getElementById('inputText').innerText = text;
+		}
+	});
+
+	// retrieve past input timestamp if available
+	getThing(LS_KEY_TIME, (timestamp) => {
+		if (timestamp !== undefined) {
+			console.log('[text] loading input text');
+			document.getElementById('inputTs').value = timestamp;
+		}
+	});
+
+	// retrieve line endings setting
+	getThing(LS_KEY_ENDINGS, (lineEndings) => {
+		if (lineEndings !== undefined) {
+			console.log('[settings] loading line endings');
+			LINE_ENDING = lineEndings;
+		}
+	});
+
+	// update everything all the time
+	setInterval(function () {
+		try {
+			convert4humans();
+			updateNow();
+
+			// hide or show the scroll to top button
+			const top = document.getElementById('htmlId').scrollTop;
+			if (top >= 120) {
+				document.querySelector('#scroll2top').classList.remove('hidden');
+			} else {
+				document.querySelector('#scroll2top').classList.add('hidden');
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	}, 300);
+
+	document.getElementById('inputTs').focus();
+}
 
 // listen for click and keyboard events
 function listenHereSon() {
@@ -121,9 +137,9 @@ function listenHereSon() {
 
 	// json key locator events
 	document.getElementById('inputText').addEventListener('click', (e) => {
-		let key = e.target.innerText;
 		let location = e.target.getAttribute('loc');
 		if (location) {
+			let key = e.target.innerText;
 			console.log('[json] clicked key:', key, 'loc:', location);
 
 			document.querySelector('#jsonKeyLocation').innerText = location;
@@ -235,6 +251,8 @@ function listenHereSon() {
 				document.querySelector('#jsonKeyWrap').classList.remove('hidden');
 			} else if (e.target.classList.contains('json2js')) {
 				document.querySelector('#inputText').innerHTML = json2js(line_endings(textInput));
+			} else if (e.target.classList.contains('asn1')) {
+				document.querySelector('#inputText').innerHTML = decodeAsn1(line_endings(textInput));
 			} else if (e.target.classList.contains('fixJson')) {
 				try {
 					document.querySelector('#inputText').innerHTML = prettyPrint(js2json(line_endings(textInput)));
@@ -323,14 +341,14 @@ function convert4humans() {
 			document.querySelector('#output').classList.remove('error');
 		} else {													// if a number is provided show the date in the output
 			ts_ms = conform_2_ms(rawInput);
-			let formated = formatDate(ts_ms, FORMAT);
-			if (formated) {
+			let formatted = formatDate(ts_ms, FORMAT);
+			if (formatted) {
 				document.querySelector('#output').classList.remove('error');
 			} else {
 				document.querySelector('#output').classList.add('error');
-				formated = 'Try again bud, like a number';
+				formatted = 'Try again bud, like a number';
 			}
-			updateIfDiff('#output', formated);
+			updateIfDiff('#output', formatted);
 		}
 		let diff = ts_ms - Date.now();
 		document.querySelector('#elapsed').innerText = friendlyMs(diff);
@@ -422,7 +440,7 @@ function updateIfDiff(id, str) {
 	str = str.toString().trim();
 	let currently = document.querySelector(id).innerText;
 	if (currently !== str) {
-		document.querySelector(id).innerText = str;
+		document.querySelector(id).innerText = str + (!use_offset ? ' UTC' : '');
 	}
 }
 
@@ -759,4 +777,46 @@ function json2js(str) {
 
 	// put quotes around white space and dashes, could be multiple dashes in a key...
 	return str.replace(/\s*(.+-.+)\s*:/g, '\n\'$1\':').replace(/(\w+\s+\w+)\s*:/g, '\'$1\':');
+}
+
+// decode the string as ASN.1 
+function decodeAsn1(str) {
+	let txt = '';
+	const LABEL = '-----BEGIN';
+	const parts = str.split(LABEL);								// split on preamble (BEGIN)
+	for (let i in parts) {										// iter on each cert section
+		if (parts[i]) {											// skip blank
+			const filtered = parts[i].replace(/#.+\n/g, '');	// remove previous decoding comments
+			if (filtered && filtered.length > 4) {				// skip nearly blank (new line or 2)
+				let section = LABEL + filtered;					// add the preamble back to the content
+				let der = Base64.unarmor(section);				// start decoding
+				let asn1 = ASN1.decode(der, 0);
+				//console.log('asn1 str', asn1.toPrettyString());
+				//console.log('asn1 obj', JSON.stringify(asn1.toObj(), null, 2));
+				//console.log('asn1 obj', JSON.stringify(asn1.toCertObj(), null, 2));
+				txt += makePemComments(asn1.toCertObj()) + '\n' + section;
+			}
+		}
+	}
+	return txt.replace(/\n\n\n+/g, '\n\n');
+}
+
+// format cert array details into pem comments
+function makePemComments(arr) {
+	let str = '';
+	for (let i in arr) {
+		if (arr[i][0] && arr[i][1]) {
+			if (arr[i][1].length <= 256) {			// skip huge hex things, not very helpful to me
+				str += `\n# ${arr[i][0]}:`;			// field name
+				if (!Array.isArray(arr[i][1])) {
+					str += ` ${arr[i][1]}`;			// 1 value
+				} else {
+					for (let x in arr[i][1]) {
+						str += `, ${arr[i][1][x]}`	// many values
+					}
+				}
+			}
+		}
+	}
+	return str;
 }

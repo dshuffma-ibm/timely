@@ -42,7 +42,7 @@ getThing(LS_KEY_HEX, (hexSetting) => {
 // load auto open setting
 getThing(LS_KEY_OPEN, (autoOpen) => {
 	if (autoOpen === undefined || autoOpen === null) {
-		document.getElementById('autoOpen').checked = true;				// default
+		document.getElementById('autoOpen').checked = false;			// default
 	} else {
 		document.getElementById('autoOpen').checked = autoOpen;
 	}
@@ -57,7 +57,7 @@ getThing(LS_KEY_ENDINGS, (lineEndings) => {
 	} else if (lineEndings === document.getElementById('lineEnding3').value) {
 		document.getElementById('lineEnding3').checked = true;
 	} else {
-		document.getElementById('lineEnding3').checked = true;		// default
+		document.getElementById('lineEnding3').checked = true;			// default
 	}
 });
 
