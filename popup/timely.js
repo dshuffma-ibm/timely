@@ -793,6 +793,7 @@ function decodeAsn1(str) {
 				let asn1 = ASN1.decode(der, 0);
 				//console.log('asn1 str', asn1.toPrettyString());
 				//console.log('asn1 obj', JSON.stringify(asn1.toObj(), null, 2));
+				//console.log('asn1 obj', JSON.stringify(asn1.toCertObj(), null, 2));
 				txt += makePemComments(asn1.toCertObj()) + '\n' + section;
 			}
 		}
