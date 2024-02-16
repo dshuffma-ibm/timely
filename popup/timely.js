@@ -253,6 +253,8 @@ function listenHereSon() {
 				document.querySelector('#inputText').innerHTML = json2js(line_endings(textInput));
 			} else if (e.target.classList.contains('asn1')) {
 				document.querySelector('#inputText').innerHTML = decodeAsn1(line_endings(textInput));
+			} else if (e.target.classList.contains('jwt')) {
+				document.querySelector('#inputText').innerHTML = decodeJwt(line_endings(textInput));
 			} else if (e.target.classList.contains('fixJson')) {
 				try {
 					document.querySelector('#inputText').innerHTML = prettyPrint(js2json(line_endings(textInput)));
@@ -462,7 +464,7 @@ function b64(text) {
 
 // decode base 64
 function fromB64(text) {
-	return atob(text);
+	return base64ToUtf8(text);
 }
 
 // encode chars
@@ -497,6 +499,16 @@ function urlEncode(text) {
 // decode the text from a url
 function urlDecode(text) {
 	return decodeURIComponent(text);
+}
+
+// convert Base64 string to a utf8 string (utf8/unicode support)
+function base64ToUtf8(str) {
+	if (typeof str === 'string') {
+		return decodeURIComponent(Array.prototype.map.call(atob(str), function (c) {
+			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);		// create a URI encoded character from each byte
+		}).join(''));
+	}
+	return '';
 }
 
 // pretty print json
@@ -819,4 +831,47 @@ function makePemComments(arr) {
 		}
 	}
 	return str;
+}
+
+// find the parts of a JWT and pretty print them
+function decodeJwt(str) {
+	let txt = '';
+	const parts = str.split('.');
+	if (!parts || parts.length !== 3) {
+		throw new Error('cannot parse jwt. text does not contain 3 sections separated by dots.')
+	}
+
+	if (parts && parts[0]) {
+		try {
+			txt += '<i>############  Header  ############</i>\n';
+			txt += prettyPrint(fromB64(parts[0])) + '\n\n';
+		} catch (e) {
+			txt += '# unable to parse:\n';
+			txt += parts[0] + '\n';
+			console.error(e);
+		}
+	}
+
+	if (parts && parts[1]) {
+		try {
+			txt += '<i>############  Payload  ############</i>\n';
+			const parsed = JSON.parse(fromB64(parts[1]));
+			if (parsed && parsed.exp) {
+				txt += '<i># expires: ' + formatDate(conform_2_ms(parsed.exp), FORMAT) + '</i>\n';
+				txt += '<i># expired?: <strong>' + (Date.now() >= conform_2_ms(parsed.exp) ? 'yes' : 'no') + '</strong></i>\n';
+			}
+			txt += prettyPrint(fromB64(parts[1])) + '\n\n';
+		} catch (e) {
+			txt += '# unable to parse:\n';
+			txt += parts[1] + '\n';
+			console.error(e);
+		}
+	}
+
+	if (parts && parts[2]) {
+		txt += '<i>############  Signature  ############</i>\n';
+		txt += parts[2] + '\n';
+	}
+
+	return txt;
 }

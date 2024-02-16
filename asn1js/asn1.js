@@ -566,7 +566,7 @@
 		if (len === 0) // long form with length 0 is a special case
 			return null; // undefined length
 		if (len > 6) // no reason to use Int10, as it would be a huge buffer anyways
-			throw "Length over 48 bits not supported at position " + (stream.pos - 1);
+			throw "Length over 48 bits not supported at position " + (stream.pos - 1) + '. len: ' + len;
 		buf = 0;
 		for (var i = 0; i < len; ++i)
 			buf = (buf * 256) + stream.get();
