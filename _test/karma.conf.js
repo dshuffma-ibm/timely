@@ -21,6 +21,7 @@ module.exports = function (config) {
 			{ pattern: '../common.js', watched: true },
 			{ pattern: '../popup/actions.js', watched: true },
 			{ pattern: '../popup/timely.js', watched: true },
+			{ pattern: './js2json.test.js', watched: true },
 			{ pattern: './asn1.test.js', watched: true },
 			{ pattern: './magic.test.js', watched: false },
 		],

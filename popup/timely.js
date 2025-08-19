@@ -251,6 +251,7 @@ function listenHereSon() {
 				document.querySelector('#jsonKeyWrap').classList.remove('hidden');
 			} else if (e.target.classList.contains('json2js')) {
 				document.querySelector('#inputText').innerHTML = json2js(line_endings(textInput));
+				document.querySelector('#jsonKeyWrap').classList.add('hidden');
 			} else if (e.target.classList.contains('asn1')) {
 				document.querySelector('#inputText').innerHTML = decodeAsn1(line_endings(textInput));
 			} else if (e.target.classList.contains('jwt')) {
@@ -757,38 +758,77 @@ function unescapeIt(str) {
 		'single': "double",
 		'plus': "a + sign",
 		'dash-in': "name",
+		'many-dashes-in-key': "name",
 		'empty': '',
+		apostrophes1: 'boxes\'',
+		apostrophes2: "boxes'",
+		apostrophes3: "ted's",
+		apostrophes4: `ted's`,
 		a : {
 			b: 1,
 			c: [0,1,2,3,],
 			david: 'this'
 		},
-	}
+		tickString: `This is david's least favorite string, it has commas, and multiple apostrophes. bob's cans' of stuff`,
+		trailingComma: "comma",
+	};
 */
 function js2json(str) {
-	// 1. add double quotes on unquoted object keys
-	// 2. replace all object keys & values that have single quotes w/double quotes
-	// 3. remove trailing commas in objects (it could be x sequential trailing commas in 1 field or many different fields in the input text)
-	// 4. remove trailing commas in arrays (^^ ditto)
-	//           .[1]                           .[2]
-	let ret = str.replace(/(\w+)\s*:/g, '"$1":').replace(/'([^'"]*)'/g, '"$1"');
+	// 1. replace any `-` string values with double quotes
+	// 2. add double quotes on unquoted object keys
+	// 3a. replace all object values that have single quotes w/double quotes
+	// 3b. replace all object keys that have single quotes w/double quotes
+	// 4. remove trailing commas in objects (it could be x sequential trailing commas in 1 field or many different fields in the input text)
+	// 5. remove trailing commas in arrays (^^ ditto)
+
+	// [1]
+	let ret = str.replace(/:\s*`(.+)`/g, ': "$1"');
+
+	// [2]
+	ret = ret.replace(/(\w+)\s*:/g, '"$1":');
+
+	// [3a]
+	//ret = ret.replace(/:\s*'([^'"]*)',\n/g, ': "$1",\n');
+	ret = ret.replace(/:\s*'((?:[^'\\]|\\.)*)',*/g, ': "$1",');
+
+	// [3b]
+	ret = ret.replace(/'([^'"]*)':/g, '"$1": ');
+
+	// remove escaped single quotes, remove the escape char
+	ret = ret.replace(/\\'/g, "'");
 
 	for (let i = 0; i <= 1000; i++) {				// repeat for x number of trailing commas. limit the amount of time we spend here...
 		const before = ret.length;
 
-		//       .[3]                                .[4]
+		//       .[4]                                .[5]
 		ret = ret.replace(/(\{[\S\s]+),\s*}/g, '$1}').replace(/(\[[\S\s]+),\s*]/g, '$1]');
 		if (before === ret.length) { break; }		// once the length stopped changing, we are done
 	}
+
+	// remove trailing semicolon (if found) (for objects and arrays)
+	ret = ret.trim().replace(/}\s*;$/g, '}').replace(/]\s*;$/g, ']');
 	return ret;
 }
-
 // convert a json string to js object w/single quotes
 function json2js(str) {
-	str = str.replace(/"([^'"]+)"\s*:\s*/g, '$1: ').replace(/"([^'"]*)"/g, '\'$1\'');
+	// format white space by parsing and stringing it
+	str = JSON.stringify(JSON.parse(str), null, 2);
+
+	// escape any single quotes first
+	str = str.replace(/'/g, `\\'`);
+
+	// then replace double quotes keys and values with single quote
+	str = str.replace(/"([^'"]+)"\s*:\s*/g, '$1: ');
+
+	str = str.replace(/"([^"]*)"/g, '\'$1\'');
 
 	// put quotes around white space and dashes, could be multiple dashes in a key...
-	return str.replace(/\s*(.+-.+)\s*:/g, '\n\'$1\':').replace(/(\w+\s+\w+)\s*:/g, '\'$1\':');
+	// capture leading white space and put it back (to keep the indention)
+	str = str.replace(/(\s*)(.+-.+)\s*:/g, '$1\'$2\':').replace(/(\w+\s+\w+)\s*:/g, '\'$1\':');
+
+	// add back trailing comma and trailing semicolon (for objects and arrays)
+	str = (str + ';').replace(/\n}\s*;$/g, ',\n}').replace(/\n]\s*;$/g, ',\n]');
+	return str;
 }
 
 // decode the string as ASN.1 
