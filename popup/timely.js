@@ -531,7 +531,7 @@ function stringMeUp(json, spacing, loc) {
 				keyNum++;
 				const s_key = makeSafe(key);
 				const s_value = makeSafe(json[key]);
-				let my_loc = loc + '.' + key;
+				let my_loc = loc + '.' + key;		// dsh todo if key contains space or dash this is wrong
 				let attrs = 'loc="' + my_loc.substring(1) + '"';
 
 				if (typeof json[key] === 'string') {										// she's a string

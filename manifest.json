@@ -2,7 +2,7 @@
 	"description": "Convert timestamps to not timestamps and other useful things.",
 	"manifest_version": 2,
 	"name": "Timely",
-	"version": "1.5.1",
+	"version": "1.5.2",
 	"homepage_url": "https://github.com/dshuffma-ibm/timely",
 	"icons": {
 		"48": "icons/timely-48.png"
